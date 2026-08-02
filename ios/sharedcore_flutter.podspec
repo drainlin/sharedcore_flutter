@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
   s.description      = <<-DESC
 Binary Flutter bindings for SharedCore Rust.
                        DESC
-  s.homepage         = 'https://example.invalid/sharedcore'
+  s.homepage         = 'https://github.com/drainlin/sharedcore_flutter'
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'SharedCore' => 'sharedcore@example.invalid' }
 

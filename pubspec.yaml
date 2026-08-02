@@ -1,7 +1,7 @@
 name: sharedcore_flutter
 description: "Binary Flutter bindings for SharedCore Rust."
 version: 0.3.0
-homepage:
+homepage: https://github.com/drainlin/sharedcore_flutter
 
 environment:
   sdk: ^3.12.2
