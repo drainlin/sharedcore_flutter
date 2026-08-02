@@ -1,0 +1,173 @@
+import CoreTelephony
+import Darwin
+import Flutter
+import Security
+import UIKit
+
+/// Collects iOS-owned device information for the Rust SharedCore client.
+public final class SharedcoreFlutterPlugin: NSObject, FlutterPlugin {
+    private static let channelName = "sharedcore_flutter/device_info"
+
+    public static func register(with registrar: FlutterPluginRegistrar) {
+        let channel = FlutterMethodChannel(
+            name: channelName,
+            binaryMessenger: registrar.messenger()
+        )
+        registrar.addMethodCallDelegate(SharedcoreFlutterPlugin(), channel: channel)
+    }
+
+    public func handle(
+        _ call: FlutterMethodCall,
+        result: @escaping FlutterResult
+    ) {
+        let arguments = call.arguments as? [String: Any] ?? [:]
+        switch call.method {
+        case "collectDeviceInfo":
+            let appId = arguments["appId"] as? String ?? ""
+            result(collectDeviceInfo(appId: appId))
+        case "loadSession":
+            result(loadSession(prefix: sessionPrefix(arguments)))
+        case "saveSession":
+            saveSession(arguments, prefix: sessionPrefix(arguments))
+            result(nil)
+        case "clearSession":
+            clearSession(prefix: sessionPrefix(arguments))
+            result(nil)
+        default:
+            result(FlutterMethodNotImplemented)
+        }
+    }
+
+    private func collectDeviceInfo(appId: String) -> [String: Any] {
+        let device = UIDevice.current
+        let language = Locale.preferredLanguages.first ?? Locale.current.identifier
+        let templateLanguage = (Locale.current as NSLocale).object(
+            forKey: .languageCode
+        ) as? String ?? ""
+        let carriers = currentCarriers()
+
+        return [
+            "appId": appId,
+            "bundleId": Bundle.main.bundleIdentifier ?? "",
+            "udid": persistentDeviceIdentifier(),
+            "appVersion": Bundle.main.object(
+                forInfoDictionaryKey: "CFBundleShortVersionString"
+            ) as? String ?? "1.0",
+            "platform": "ios",
+            "deviceName": device.name,
+            "systemName": device.systemName,
+            "osVersion": device.systemVersion,
+            "language": language,
+            "templateLanguage": templateLanguage,
+            "timezone": TimeZone.current.identifier,
+            "inputLanguage": UITextInputMode.activeInputModes.first?.primaryLanguage ?? "",
+            "vpn": isVpnActive(),
+            "hasWxOrQq": hasWxOrQq(),
+            "networkOperator": carriers.network,
+            "simOperator": carriers.sim,
+            "installReferrer": "",
+        ]
+    }
+
+    private func persistentDeviceIdentifier() -> String {
+        let service = (Bundle.main.bundleIdentifier ?? "SharedCore") +
+            ".sharedcore.udid"
+        let account = "udid"
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecAttrSynchronizable as String: false,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+
+        var existing: CFTypeRef?
+        if SecItemCopyMatching(query as CFDictionary, &existing) == errSecSuccess,
+           let data = existing as? Data,
+           let identifier = String(data: data, encoding: .utf8),
+           !identifier.isEmpty {
+            return identifier
+        }
+
+        let identifier = UIDevice.current.identifierForVendor?.uuidString ??
+            UUID().uuidString
+        var insertion = query
+        insertion.removeValue(forKey: kSecReturnData as String)
+        insertion.removeValue(forKey: kSecMatchLimit as String)
+        insertion[kSecValueData as String] = Data(identifier.utf8)
+        insertion[kSecAttrAccessible as String] =
+            kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        SecItemAdd(insertion as CFDictionary, nil)
+        return identifier
+    }
+
+    private func sessionPrefix(_ arguments: [String: Any]) -> String {
+        arguments["prefix"] as? String ?? "SharedCore"
+    }
+
+    private func loadSession(prefix: String) -> [String: String]? {
+        let defaults = UserDefaults.standard
+        let accessToken = defaults.string(forKey: prefix + "AccessToken") ?? ""
+        guard !accessToken.isEmpty else { return nil }
+        return [
+            "accessToken": accessToken,
+            "userId": defaults.string(forKey: prefix + "UserId") ?? "",
+            "email": defaults.string(forKey: prefix + "Email") ?? "",
+        ]
+    }
+
+    private func saveSession(_ arguments: [String: Any], prefix: String) {
+        let accessToken = arguments["accessToken"] as? String ?? ""
+        guard !accessToken.isEmpty else {
+            clearSession(prefix: prefix)
+            return
+        }
+        let defaults = UserDefaults.standard
+        defaults.set(accessToken, forKey: prefix + "AccessToken")
+        defaults.set(arguments["userId"] as? String ?? "", forKey: prefix + "UserId")
+        defaults.set(arguments["email"] as? String ?? "", forKey: prefix + "Email")
+    }
+
+    private func clearSession(prefix: String) {
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: prefix + "AccessToken")
+        defaults.removeObject(forKey: prefix + "UserId")
+        defaults.removeObject(forKey: prefix + "Email")
+    }
+
+    private func currentCarriers() -> (network: String, sim: String) {
+        let info = CTTelephonyNetworkInfo()
+        let carrier = info.serviceSubscriberCellularProviders?
+            .values
+            .first(where: { $0.carrierName?.isEmpty == false })
+        return (carrier?.carrierName ?? "", carrier?.mobileNetworkCode ?? "")
+    }
+
+    private func hasWxOrQq() -> Bool {
+        let schemes = ["weixin://", "mqq://"]
+        return schemes.contains { value in
+            guard let url = URL(string: value) else { return false }
+            return UIApplication.shared.canOpenURL(url)
+        }
+    }
+
+    private func isVpnActive() -> Bool {
+        var interfaces: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&interfaces) == 0 else { return false }
+        defer { freeifaddrs(interfaces) }
+
+        var pointer = interfaces
+        while let current = pointer {
+            let name = String(cString: current.pointee.ifa_name)
+            if name.hasPrefix("utun") ||
+                name.hasPrefix("tun") ||
+                name.hasPrefix("ppp") ||
+                name.hasPrefix("ipsec") {
+                return true
+            }
+            pointer = current.pointee.ifa_next
+        }
+        return false
+    }
+}

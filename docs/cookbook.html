@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="sharedcore_flutter 安装、升级、业务调用、错误处理与数据模型使用手册">
+  <title>sharedcore_flutter Cookbook</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f7;
+      --surface: #fff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --subtle: #86868b;
+      --line: rgba(0, 0, 0, .1);
+      --table-line: rgba(0, 0, 0, .2);
+      --blue: #0066cc;
+      --blue-soft: #eaf3ff;
+      --green: #176b46;
+      --green-soft: #eaf7f0;
+      --amber: #805300;
+      --amber-soft: #fff5df;
+      --red: #b42335;
+      --red-soft: #fff0f1;
+      --purple: #6e3dc8;
+      --purple-soft: #f2edff;
+      --code-bg: #1d1d1f;
+      --code-text: #f5f5f7;
+      --shadow: 0 18px 48px rgba(0, 0, 0, .07);
+    }
+    * { box-sizing: border-box; }
+    html {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      overflow-x: clip;
+      scroll-behavior: smooth;
+    }
+    body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      overflow-x: clip;
+      margin: 0;
+      color: var(--text);
+      background: linear-gradient(180deg, #fff 0, var(--bg) 390px), var(--bg);
+      font: 15px/1.62 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, pre { font-family: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    :not(pre) > code { padding: .1rem .32rem; border-radius: 5px; background: rgba(0, 0, 0, .055); font-size: .91em; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(245, 245, 247, .87);
+      backdrop-filter: saturate(180%) blur(20px);
+    }
+    .topbar-title { min-width: 0; overflow: hidden; color: var(--text); font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+    .topbar-nav { min-width: 0; display: flex; gap: 22px; overflow-x: auto; white-space: nowrap; font-size: .87rem; }
+    .topbar-nav a { color: var(--muted); }
+    .topbar-nav a:hover { color: var(--text); text-decoration: none; }
+    .layout { width: 100%; min-width: 0; max-width: 100%; display: grid; grid-template-columns: 292px minmax(0, 1fr); min-height: calc(100vh - 52px); }
+    .sidebar {
+      min-width: 0;
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow: auto;
+      padding: 28px 20px;
+      border-right: 1px solid var(--line);
+      background: rgba(255, 255, 255, .74);
+      backdrop-filter: saturate(160%) blur(18px);
+    }
+    .brand h1 { margin: 0; font-size: 1.08rem; line-height: 1.25; }
+    .brand p { margin: 8px 0 0; color: var(--muted); font-size: .9rem; }
+    .search {
+      width: 100%;
+      height: 38px;
+      margin: 22px 0 18px;
+      padding: 0 12px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      outline: none;
+      background: rgba(0, 0, 0, .055);
+      color: var(--text);
+      font: inherit;
+    }
+    .search:focus { border-color: rgba(0, 102, 204, .4); background: #fff; box-shadow: 0 0 0 3px rgba(0, 102, 204, .11); }
+    .nav-title { margin: 22px 8px 7px; color: var(--subtle); font-size: .72rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .nav-group { display: grid; gap: 2px; }
+    .nav-group a { padding: 6px 8px; border-radius: 7px; color: var(--muted); font-size: .88rem; overflow-wrap: anywhere; }
+    .nav-group a:hover { color: var(--text); background: rgba(0, 0, 0, .05); text-decoration: none; }
+    main { width: min(1120px, 100%); min-width: 0; max-width: 100%; padding: 56px 48px 90px; }
+    .hero { padding: 22px 0 48px; border-bottom: 1px solid var(--line); }
+    .hero h2 { max-width: 930px; margin: 0; font-size: clamp(3rem, 7vw, 5.7rem); line-height: .98; letter-spacing: -.04em; }
+    .hero p { max-width: 790px; margin: 24px 0 0; color: var(--muted); font-size: 1.14rem; }
+    .eyebrow { margin: 0 0 8px !important; color: var(--blue) !important; font-size: .76rem !important; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .button { display: inline-flex; min-height: 38px; align-items: center; padding: 8px 16px; border-radius: 999px; background: var(--blue); color: #fff; font-weight: 650; }
+    .button:hover { background: #0071e3; text-decoration: none; }
+    .button.secondary { border: 1px solid rgba(0, 102, 204, .35); background: transparent; color: var(--blue); }
+    .button.secondary:hover { background: var(--blue-soft); }
+    .doc-note { max-width: 100%; overflow-wrap: anywhere; display: inline-flex; margin-top: 20px; padding: 8px 12px; border: 1px solid rgba(0, 102, 204, .15); border-radius: 8px; background: #f0f7ff; color: #245b87; font-size: .9rem; }
+    .section { width: 100%; min-width: 0; max-width: 100%; margin-top: 60px; scroll-margin-top: 70px; }
+    .section-heading { max-width: 810px; margin-bottom: 23px; }
+    .section-heading h2 { margin: 0; font-size: 2.15rem; line-height: 1.12; letter-spacing: -.02em; }
+    .section-heading p { margin: 9px 0 0; color: var(--muted); font-size: 1.02rem; }
+    .grid { min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 16px; }
+    .card { min-width: 0; padding: 21px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 1px 0 rgba(0, 0, 0, .02); }
+    .card h3 { margin: 0 0 8px; font-size: 1.06rem; }
+    .card p { margin: 0; color: var(--muted); }
+    .card ul { margin: 12px 0 0; padding-left: 19px; color: var(--muted); }
+    .architecture { display: grid; gap: 8px; margin: 20px 0; }
+    .arch-row { min-width: 0; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+    .arch-row strong { min-width: 190px; }
+    .arch-row span { min-width: 0; overflow-wrap: anywhere; color: var(--muted); }
+    .arch-arrow { margin-left: 92px; color: var(--subtle); }
+    .callout { margin: 18px 0; padding: 16px 18px; border-radius: 11px; color: #245b87; background: var(--blue-soft); border-left: 4px solid var(--blue); }
+    .callout strong { color: var(--text); }
+    .callout.warning { background: var(--amber-soft); border-color: #d99100; color: var(--amber); }
+    .callout.success { background: var(--green-soft); border-color: #2b8a60; color: var(--green); }
+    .callout.purple { background: var(--purple-soft); border-color: var(--purple); color: var(--purple); }
+    .code-block { position: relative; width: 100%; min-width: 0; max-width: 100%; overflow: hidden; margin: 15px 0; border-radius: 12px; background: var(--code-bg); box-shadow: var(--shadow); }
+    .code-label { min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 13px; border-bottom: 1px solid rgba(255, 255, 255, .1); color: #aaa; font-size: .76rem; }
+    .code-label span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .copy { border: 0; background: transparent; color: #9ecbff; cursor: pointer; font: inherit; }
+    .code-block pre { width: 100%; min-width: 0; max-width: 100%; overflow: auto; margin: 0; padding: 18px; color: var(--code-text); font-size: .84rem; line-height: 1.64; }
+    .code-block code { padding: 0; background: none; }
+    .token-comment { color: #8b949e; font-style: italic; }
+    .token-keyword { color: #ff7b72; }
+    .token-type { color: #d2a8ff; }
+    .token-string { color: #a5d6ff; }
+    .token-number, .token-literal { color: #79c0ff; }
+    .token-function { color: #d2a8ff; }
+    .token-property { color: #7ee787; }
+    .method-list, .model-list { min-width: 0; display: grid; gap: 17px; }
+    .method-card, .model-card { min-width: 0; max-width: 100%; scroll-margin-top: 68px; padding: 23px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    .method-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .method-head h3, .model-card h3 { margin: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
+    .badge { flex: 0 0 auto; padding: 3px 8px; border-radius: 999px; color: var(--green); background: var(--green-soft); font-size: .74rem; font-weight: 700; }
+    .badge.optional { color: var(--blue); background: var(--blue-soft); }
+    .badge.advanced { color: var(--purple); background: var(--purple-soft); }
+    .badge.alias { color: var(--muted); background: rgba(0, 0, 0, .06); }
+    .badge.deprecated { color: var(--amber); background: var(--amber-soft); }
+    .method-card > p, .model-card > p { color: var(--muted); }
+    .meta { display: grid; grid-template-columns: 110px 1fr; gap: 7px 15px; margin: 14px 0 0; }
+    .meta dt { color: var(--subtle); font-weight: 650; }
+    .meta dd { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
+    .table-wrap { width: 100%; max-width: 100%; overflow-x: auto; margin: 16px 0; border: 1px solid var(--table-line); border-radius: 12px; background: #fff; }
+    .table-wrap table { width: 100%; min-width: 560px; border-collapse: collapse; background: #fff; }
+    .table-wrap th, .table-wrap td { padding: 12px 14px; border-right: 1px solid var(--table-line); border-bottom: 1px solid var(--table-line); text-align: left; vertical-align: top; }
+    .table-wrap th { background: #f4f4f6; color: var(--subtle); font-size: .78rem; }
+    .table-wrap th:last-child, .table-wrap td:last-child { border-right: 0; }
+    .table-wrap tbody tr:last-child td { border-bottom: 0; }
+    .field-table { width: 100%; max-width: 100%; border-collapse: collapse; margin-top: 14px; border: 1px solid var(--table-line); table-layout: fixed; }
+    .field-table th, .field-table td { padding: 10px 11px; border: 1px solid var(--table-line); text-align: left; vertical-align: top; }
+    .field-table th { color: var(--subtle); font-size: .76rem; text-transform: uppercase; letter-spacing: .04em; }
+    .field-table thead { background: #f4f4f6; }
+    .field-table td { color: var(--muted); }
+    .field-table td:first-child { color: var(--text); }
+    .field-table th, .field-table td, .field-table code { overflow-wrap: anywhere; word-break: break-word; }
+    .error-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .error-chip { padding: 6px 10px; border-radius: 999px; background: var(--red-soft); color: var(--red); font-size: .82rem; }
+    .support-table { width: 100%; border-collapse: collapse; border: 1px solid var(--table-line); background: #fff; }
+    .support-table th, .support-table td { padding: 13px 15px; border: 1px solid var(--table-line); text-align: left; }
+    .support-table th { color: var(--subtle); font-size: .78rem; }
+    .support-table thead { background: #f4f4f6; }
+    .yes { color: var(--green); font-weight: 700; }
+    .no { color: var(--red); font-weight: 700; }
+    .empty { display: none; padding: 32px; text-align: center; color: var(--muted); }
+    footer { margin-top: 70px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--subtle); font-size: .86rem; }
+    @media (max-width: 860px) {
+      .topbar { gap: 12px; padding: 0 16px; }
+      .topbar-nav { display: none; }
+      .layout { display: block; }
+      .sidebar { position: static; width: auto; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .method-index, .model-index { display: none; }
+      main { padding: 38px 22px 70px; }
+      .hero h2 { font-size: clamp(2.8rem, 14vw, 4.5rem); }
+      .arch-row { display: block; }
+      .arch-row strong { display: block; margin-bottom: 4px; }
+      .arch-arrow { margin-left: 20px; }
+      .meta { grid-template-columns: 1fr; gap: 2px; }
+      .meta dd { margin-bottom: 8px; }
+      .field-table, .support-table { display: block; width: 100%; max-width: 100%; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="topbar-title" href="#top">sharedcore_flutter Cookbook</a>
+    <nav class="topbar-nav" aria-label="主要导航">
+      <a href="#install">安装</a>
+      <a href="#upgrade">升级</a>
+      <a href="#quickstart">初始化</a>
+      <a href="#recipes">业务流程</a>
+      <a href="#methods">API</a>
+      <a href="#models">模型</a>
+      <a href="#errors">错误</a>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>sharedcore_flutter</h1>
+        <p>Flutter 插件 v0.3.0<br>接入、调用与升级手册</p>
+      </div>
+      <input id="search" class="search" type="search" placeholder="搜索 API、模型或示例…" aria-label="搜索文档">
+      <div class="nav-title">开始</div>
+      <nav class="nav-group">
+        <a href="#overview">插件边界</a>
+        <a href="#install">安装插件</a>
+        <a href="#upgrade">从 0.2.1 升级</a>
+        <a href="#quickstart">创建客户端</a>
+        <a href="#session">Session 管理</a>
+        <a href="#recipes">常见业务流程</a>
+        <a href="#purchase">购买验证</a>
+        <a href="#errors">错误处理</a>
+        <a href="#support">平台与发布</a>
+      </nav>
+      <div class="nav-title">调用 API</div>
+      <nav id="method-index" class="nav-group method-index"></nav>
+      <div class="nav-title">业务模型</div>
+      <nav id="model-index" class="nav-group model-index"></nav>
+    </aside>
+
+    <main id="top">
+      <section class="hero">
+        <p class="eyebrow">SharedCore · Flutter Plugin</p>
+        <h2>在 Flutter 中直接使用 SharedCore。</h2>
+        <p>这份手册只讲插件使用者需要关心的内容：如何安装、初始化、管理 Session、调用业务接口、处理错误以及从 0.2.1 升级。</p>
+        <div class="hero-actions">
+          <a class="button" href="#quickstart">5 分钟接入</a>
+          <a class="button secondary" href="#methods">查看调用 API</a>
+        </div>
+        <div class="doc-note">对应 sharedcore_flutter 0.3.0 · Android/iOS ARM64</div>
+      </section>
+
+      <section id="overview" class="section searchable" data-search="overview 插件边界 flutter dart 架构 使用者">
+        <div class="section-heading">
+          <p class="eyebrow">Overview</p>
+          <h2>插件边界</h2>
+          <p>Flutter App 只通过稳定的 Dart 接口使用插件；网络、签名和 Session 刷新由插件内部完成。</p>
+        </div>
+        <div class="architecture">
+          <div class="arch-row"><strong>Flutter App</strong><span>页面、状态管理、Session 持久化、商店 SDK</span></div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-row"><strong>sharedcore_flutter</strong><span>全局单例、设备信息自动采集、网络请求、签名、Session 刷新、模型转换与稳定异常类型</span></div>
+        </div>
+        <div class="grid">
+          <article class="card"><h3>直接作为 Flutter 插件使用</h3><p>添加依赖后通过公开 Dart API 调用，不需要配置额外的开发环境。</p></article>
+          <article class="card"><h3>网络由插件管理</h3><p>插件负责请求、证书校验、签名和错误转换，不需要 App 注入 HTTP 客户端。</p></article>
+          <article class="card"><h3>宿主仍有职责</h3><p>token 安全存储、商店购买和文件选择仍由 Flutter App 完成；插件自动读取系统设备元数据。</p></article>
+        </div>
+        <div class="callout purple"><strong>只导入公开入口：</strong><code>package:sharedcore_flutter/sharedcore_flutter.dart</code>。不要导入 <code>src/</code> 下的文件。</div>
+      </section>
+
+      <section id="install" class="section searchable" data-search="install 安装 pubspec path dependency import">
+        <div class="section-heading">
+          <p class="eyebrow">Installation</p>
+          <h2>添加插件</h2>
+          <p>当前插件适合通过私有仓库或本地路径接入；发布方式确定后只需替换 dependency 来源。</p>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><span>pubspec.yaml · 本地开发</span><button class="copy" type="button">复制</button></div>
+          <pre><code>dependencies:
+  flutter:
+    sdk: flutter
+  sharedcore_flutter:
+    path: ../sharedcore_flutter</code></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 唯一推荐导入</span><button class="copy" type="button">复制</button></div>
+          <pre><code>import 'package:sharedcore_flutter/sharedcore_flutter.dart';</code></pre>
+        </div>
+        <div class="callout warning"><strong>请整体升级插件包。</strong>不要从不同版本中单独复制文件；升级依赖后应重新执行 Android/iOS 构建。</div>
+      </section>
+
+      <section id="upgrade" class="section searchable" data-search="upgrade migration 0.2.1 0.3.0 升级 兼容 device endpoint deprecated 废弃">
+        <div class="section-heading">
+          <p class="eyebrow">Upgrade</p>
+          <h2>从 0.2.1 升级到 0.3.0</h2>
+          <p>0.3.0 整体替换了底层实现，并且不提供旧 API 兼容层。推荐先替换插件并修复编译错误，再处理 Session 与平台配置，最后重新构建原生产物。</p>
+        </div>
+        <div class="grid">
+          <article class="card"><h3>设备信息自动采集</h3><p>删除必填的 <code>SharedCoreDeviceConfiguration</code>；多数 App 不再传设备信息。</p></article>
+          <article class="card"><h3>Session 自动持久化</h3><p>Android 和 iOS 都会自动恢复、保存和清理完整 Session。</p></article>
+          <article class="card"><h3>购买验证统一</h3><p>四个平台/类型方法合并为 <code>verifyPurchase</code>，平台和商品类型自动判断。</p></article>
+          <article class="card"><h3>异常来源二选一</h3><p>后端错误读取 <code>backendCode</code>，本机错误读取 <code>localError</code>。</p></article>
+        </div>
+        <h3>推荐升级顺序</h3>
+        <ol>
+          <li>整体替换 0.3.0 插件包，执行依赖更新并修复 Dart 编译错误。</li>
+          <li>删除旧的设备配置，确认签名密钥和 Endpoint 路径模式。</li>
+          <li>修改 Session 恢复、图生图、购买验证、兑换码和异常处理代码。</li>
+          <li>补充所需平台配置，清理旧构建缓存并重新构建 Android/iOS。</li>
+        </ol>
+        <h3>初始化迁移</h3>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 0.2.1</span><button class="copy" type="button">复制</button></div>
+          <pre><code>final client = await SharedCore.configure(
+  SharedCoreConfiguration(
+    baseUrl: apiBaseUrl,
+    appId: appId,
+    device: SharedCoreDeviceConfiguration(
+      vpn: vpn,
+      hasWxOrQQ: hasWxOrQQ,
+      templateLanguage: templateLanguage,
+      installReferrer: installReferrer,
+    ),
+    signSecret: signSecret,
+  ),
+);</code></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 0.3.0</span><button class="copy" type="button">复制</button></div>
+          <pre><code>final client = await SharedCore.configure(
+  SharedCoreConfiguration(
+    baseUrl: apiBaseUrl,
+    appId: appId,
+    signSecret: null,
+    // 仅在需要覆盖自动采集值时传入：
+    deviceOverrides: SharedCoreDeviceOverrides(
+      templateLanguage: selectedTemplateLanguage,
+      installReferrer: installReferrer,
+    ),
+  ),
+);</code></pre>
+        </div>
+        <div class="callout"><strong>signSecret 的 null 有明确含义。</strong><code>null</code> 或省略参数会使用插件内置并保护保存的默认值；任何非 null 值都会原样使用，包括空字符串。</div>
+        <h3>公开方法迁移</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>已删除</th><th>0.3.0 唯一入口</th></tr></thead>
+            <tbody>
+              <tr><td><code>device: SharedCoreDeviceConfiguration(...)</code></td><td><code>deviceOverrides: SharedCoreDeviceOverrides(...)</code></td></tr>
+              <tr><td><code>proxyHost</code> / <code>proxyPort</code></td><td><code>http: SharedCoreHttpConfiguration(proxyUrl: ...)</code></td></tr>
+              <tr><td>没有明确的路径模式</td><td><code>apiPathMode: SharedCoreApiPathMode...</code></td></tr>
+              <tr><td><code>setSession(accessToken:, userId:, email:)</code></td><td><code>setSession(accessToken: ...)</code></td></tr>
+              <tr><td><code>uploadUserDeviceIdentifiers(...命名参数)</code></td><td><code>uploadUserDeviceIdentifiers(SharedCoreSingularIdentifiers(...))</code></td></tr>
+              <tr><td><code>exchangeCode(code)</code> → <code>Future&lt;Map&gt;</code></td><td><code>exchangeCode(code)</code> → <code>Future&lt;bool&gt;</code></td></tr>
+              <tr><td><code>uploadFileResult(path)</code></td><td><code>uploadFile(path)</code></td></tr>
+              <tr><td><code>submitVideoTask(...命名参数)</code></td><td><code>submitVideoTask(SharedCoreSubmitVideoOptions(...))</code></td></tr>
+              <tr><td><code>submitWaveSpeedTask(styleId:, imageURL:)</code></td><td><code>submitImageTaskFromImageUrl(imageUrl:, style:)</code></td></tr>
+              <tr><td><code>submitWaveSpeedTaskWithImagePath(styleId:, imagePath:)</code></td><td><code>submitImageTaskFromImagePath(imagePath:, style:)</code></td></tr>
+              <tr><td><code>deleteHistoryItemIds(ids)</code></td><td><code>deleteHistoryItems(ids)</code></td></tr>
+              <tr><td><code>loadSensitiveWordList()</code></td><td><code>loadSensitiveWords()</code></td></tr>
+              <tr><td>四个 Apple/Google 购买与订阅验证方法</td><td><code>verifyPurchase(productId:, purchaseData:)</code></td></tr>
+              <tr><td><code>migrateUserSession(...)</code></td><td>已移除，没有替代入口</td></tr>
+              <tr><td><code>errorCode</code> / <code>errorName</code> / <code>code</code> / <code>type</code> / <code>businessCode</code> / <code>businessReason</code> / <code>retryable</code></td><td><code>backendCode</code> / <code>localError</code> / <code>message</code> / <code>httpStatus</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Session 迁移</h3>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 新的恢复方式</span><button class="copy" type="button">复制</button></div>
+          <pre><code>await client.setSession(accessToken: savedAccessToken);</code></pre>
+        </div>
+        <p><code>setSession</code> 现在会请求后端刷新账号并补齐 <code>userId</code> 和 <code>email</code>。iOS 默认沿用旧插件的 <code>NSUserDefaults</code> 键，可以自动恢复；Android 改为插件私有 <code>SharedPreferences</code>，如果 0.2.1 的 token 由 App 自己保存，升级后的第一次启动需要手动导入一次。</p>
+        <div class="callout warning"><strong>Android 只需要迁移一次。</strong>调用 <code>setSession(accessToken: oldToken)</code> 成功后，0.3.0 会自动保存完整 Session；以后 <code>configure</code> 会自动恢复。<code>clearSession()</code> 会同步清除平台存储。</div>
+        <h3>路径与测试服</h3>
+        <div class="grid">
+          <article class="card"><h3>builtIn（默认）</h3><p>使用插件内置真实路径并忽略 <code>endpointPaths</code>，适合绝大多数 App。</p></article>
+          <article class="card"><h3>custom</h3><p>只使用调用方路径映射，配置时必须一次性提供全部 21 项。</p></article>
+          <article class="card"><h3>bundleDerived</h3><p>根据运行时 Bundle ID/包名派生路径，同时派生 JSON noise 前缀并固定为 20 项。</p></article>
+        </div>
+        <p>0.2.1 如果只覆盖了少量 Endpoint，不能把原映射直接用于 <code>custom</code>；应改用默认 <code>builtIn</code>，或补齐完整映射。<code>testServerMode: true</code> 优先级最高，会强制使用内置测试服地址和未混淆真实路径。</p>
+        <h3>购买验证迁移</h3>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 统一购买验证</span><button class="copy" type="button">复制</button></div>
+          <pre><code>final result = await client.verifyPurchase(
+  productId: purchase.productID,
+  purchaseData: platformPurchaseData,
+);</code></pre>
+        </div>
+        <p>iOS 的 <code>purchaseData</code> 是 Apple receipt data，Android 是 Google Play purchase token。只有 v2 商品目录 <code>creditPage.purchaseList</code> 中的商品按一次性内购验证，其他已知商品全部按订阅验证。插件会按需加载并缓存商品目录；找不到商品时抛出 <code>SharedCoreLocalError.purchaseProductNotFound</code>。</p>
+        <h3>异常迁移</h3>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 0.3.0 错误分流</span><button class="copy" type="button">复制</button></div>
+          <pre><code>try {
+  await client.loadHomeContent();
+} on SharedCoreException catch (error) {
+  if (error.isBackendError) {
+    handleBackendError(error.backendCode!, error.message);
+  } else {
+    handleLocalError(error.localError!, error.message);
+  }
+}</code></pre>
+        </div>
+        <p>后端错误只有 <code>backendCode</code>，本机错误只有 <code>localError</code>；二者不会同时存在。<code>message</code> 分别承载后端返回消息或本机诊断信息，<code>httpStatus</code> 只有在能够取得状态码时才非空。</p>
+        <h3>Endpoint 名称迁移</h3>
+        <p>新枚举名就是实际路径去掉开头的 <code>/</code>。例如 <code>/homeDataNew</code> 对应 <code>SharedCoreEndpoint.homeDataNew</code>。</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>0.2.1 名称（已删除）</th><th>0.3.0 名称</th><th>实际 API</th></tr></thead>
+            <tbody>
+              <tr><td><code>userMigration</code></td><td>已移除</td><td><code>/userMigration</code> 已移除</td></tr>
+              <tr><td><code>homeData</code></td><td><code>homeDataNew</code></td><td><code>/homeDataNew</code></td></tr>
+              <tr><td><code>videoHistory</code></td><td><code>videoTaskHistory</code></td><td><code>/videoTaskHistory</code></td></tr>
+              <tr><td><code>imageHistory</code></td><td><code>userAlbum</code></td><td><code>/userAlbum</code></td></tr>
+              <tr><td><code>videoTemplates</code></td><td><code>videoList</code></td><td><code>/videoList</code></td></tr>
+              <tr><td><code>deleteHistory</code></td><td><code>videoDel</code></td><td><code>/videoDel</code></td></tr>
+              <tr><td><code>submitBodyEnhance</code></td><td><code>submitWaveSpeed</code></td><td><code>/submitWaveSpeed</code></td></tr>
+              <tr><td><code>purchaseOptions</code></td><td><code>rechargePurchaseListV2</code></td><td><code>/rechargePurchaseListV2</code></td></tr>
+              <tr><td><code>appleSubscription</code></td><td><code>subscribeApple</code></td><td><code>/subscribeApple</code></td></tr>
+              <tr><td><code>googleSubscription</code></td><td><code>subscribeGoogle</code></td><td><code>/subscribeGoogle</code></td></tr>
+              <tr><td><code>uploadUserDeviceIdentifiers</code></td><td><code>updateUserData</code></td><td><code>/updateUserData</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>模型与平台变化</h3>
+        <ul>
+          <li><code>SharedCoreReplacementApp.schema</code> 和 <code>hasTarget</code> 已删除；<code>isEnabled</code> 只读取后端 <code>enabled/newAppEnabled</code>。</li>
+          <li><code>SharedCorePurchaseVerificationResult.shouldDiscardReceipt</code> 已删除。</li>
+          <li>新增 <code>SharedCoreSession</code> 用于读取完整会话，但恢复会话仍只传 token。</li>
+          <li>0.3.0 只支持 Android ARM64、iOS ARM64 真机和 Apple Silicon 模拟器，不支持 x86、x86_64 或 32 位 ARM。</li>
+          <li>iOS 检测微信/QQ 需要宿主配置 <code>LSApplicationQueriesSchemes</code>；Android package visibility 已由插件声明。</li>
+        </ul>
+        <div class="callout warning"><strong>升级后必须重新构建。</strong>不要混用 0.2.1 与 0.3.0 的 Dart 文件、生成代码或原生二进制，也不要沿用旧插件的构建缓存。</div>
+        <p>需要逐项核对时，请查看项目根目录的 <a href="../MIGRATION_0_3_0.md">完整 0.3.0 迁移指南</a>。</p>
+      </section>
+
+      <section id="quickstart" class="section searchable" data-search="quick start 初始化 initialize configure singleton configuration device http appId baseUrl">
+        <div class="section-heading">
+          <p class="eyebrow">Quick Start</p>
+          <h2>配置全局客户端</h2>
+          <p><code>SharedCore.configure</code> 会自动完成插件初始化并采集 Android/iOS 设备信息，调用方不需要单独执行初始化方法。</p>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 完整的最小配置</span><button class="copy" type="button">复制</button></div>
+          <pre><code>import 'package:sharedcore_flutter/sharedcore_flutter.dart';
+
+Future&lt;SharedCoreClient&gt; createSharedCoreClient() async {
+  final client = await SharedCore.configure(
+    const SharedCoreConfiguration(
+      baseUrl: 'https://api.example.com',
+      appId: 'your-app-id',
+      signSecret: null, // 使用插件内置的默认签名密钥
+    ),
+  );
+
+  return client;
+}</code></pre>
+        </div>
+        <div class="callout"><strong>生命周期是进程级单例。</strong>后续通过 <code>SharedCore.instance</code> 使用；相同配置重复调用会返回同一个实例，不同配置会抛出 <code>SharedCoreLocalError.alreadyConfigured</code>。</div>
+        <div class="callout success"><strong>通常不需要传 deviceOverrides。</strong>设备标识、App 版本、系统信息、语言、时区、输入语言、VPN、微信/QQ 和运营商信息会在配置时自动采集。</div>
+        <div class="callout warning"><strong>iOS 应用检测：</strong>如果需要自动判断微信或 QQ，请在宿主 <code>Info.plist</code> 的 <code>LSApplicationQueriesSchemes</code> 中保留 <code>weixin</code> 和 <code>mqq</code>。Android 所需的包可见性查询已由插件声明。</div>
+        <div class="code-block">
+          <div class="code-label"><span>XML · iOS Runner/Info.plist</span><button class="copy" type="button">复制</button></div>
+          <pre><code>&lt;key&gt;LSApplicationQueriesSchemes&lt;/key&gt;
+&lt;array&gt;
+  &lt;string&gt;weixin&lt;/string&gt;
+  &lt;string&gt;mqq&lt;/string&gt;
+&lt;/array&gt;</code></pre>
+        </div>
+        <h3>覆盖或补充设备信息</h3>
+        <p>只有业务侧掌握的值才需要传入。字段非 <code>null</code> 时覆盖自动采集结果，因此布尔值可以明确覆盖为 <code>true</code> 或 <code>false</code>。</p>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 仅填写业务侧掌握的值</span><button class="copy" type="button">复制</button></div>
+          <pre><code>const configuration = SharedCoreConfiguration(
+  baseUrl: 'https://api.example.com',
+  appId: 'your-app-id',
+  deviceOverrides: SharedCoreDeviceOverrides(
+    templateLanguage: 'zh-CN',
+    installReferrer: 'campaign', // 平台无法自动获得时由业务补充
+  ),
+);</code></pre>
+        </div>
+        <h3>自定义网络参数</h3>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 网络配置</span><button class="copy" type="button">复制</button></div>
+          <pre><code>const http = SharedCoreHttpConfiguration(
+  connectTimeout: Duration(seconds: 60),
+  readTimeout: Duration(seconds: 60),
+  proxyUrl: null,
+  userAgent: 'my-product/1.0.0',
+  maxResponseBodyBytes: 16 * 1024 * 1024,
+);
+
+final configuration = SharedCoreConfiguration(
+  baseUrl: 'https://api.example.com',
+  appId: 'your-app-id',
+  requestTimeout: const Duration(seconds: 60),
+  http: http,
+);</code></pre>
+        </div>
+        <h3>选择 API 路径模式</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th><code>apiPathMode</code></th><th>行为</th></tr></thead>
+            <tbody>
+              <tr><td><code>SharedCoreApiPathMode.builtIn</code>（默认）</td><td>使用插件内置的真实 API 路径；忽略 <code>endpointPaths</code>，JSON noise 使用调用者配置。</td></tr>
+              <tr><td><code>SharedCoreApiPathMode.custom</code></td><td>只使用调用者提供的 <code>endpointPaths</code>；初始化时强制检查全部 21 个路径，缺失任何一个都会失败，JSON noise 使用调用者配置。</td></tr>
+              <tr><td><code>SharedCoreApiPathMode.bundleDerived</code></td><td>使用 Android 包名或 iOS Bundle ID，为每个 Endpoint 自动生成确定性的混淆路径；JSON noise 前缀也自动生成，字段数固定为 20。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 使用调用者的 Endpoint 映射</span><button class="copy" type="button">复制</button></div>
+          <pre><code>final customEndpointPaths = &lt;SharedCoreEndpoint, String&gt;{
+  for (final endpoint in SharedCoreEndpoint.values)
+    endpoint: '/custom/${endpoint.name}',
+};
+
+final configuration = SharedCoreConfiguration(
+  baseUrl: 'https://api.example.com',
+  appId: 'your-app-id',
+  apiPathMode: SharedCoreApiPathMode.custom,
+  endpointPaths: customEndpointPaths,
+);</code></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 使用 Bundle ID 混淆路径</span><button class="copy" type="button">复制</button></div>
+          <pre><code>final configuration = SharedCoreConfiguration(
+  baseUrl: 'https://api.example.com',
+  appId: 'your-app-id',
+  apiPathMode: SharedCoreApiPathMode.bundleDerived,
+);</code></pre>
+        </div>
+        <div class="callout warning"><strong>混淆模式需要服务端支持。</strong>应用侧无需生成路径、JSON noise 前缀或传入 Bundle ID；插件会自动读取当前 Android 包名或 iOS Bundle ID 并完成处理。在该模式下，调用者传入的 <code>jsonNoisePrefix</code> 和 <code>jsonNoiseFieldCount</code> 会被忽略。该模式不替代登录鉴权或请求签名。</div>
+        <div class="callout success"><strong>测试服模式优先级最高。</strong><code>testServerMode: true</code> 会忽略 <code>apiPathMode</code> 和 <code>endpointPaths</code>，固定使用插件内置测试服地址与未混淆的真实 API 路径，也不要求完整自定义路径或 Bundle ID 派生条件。</div>
+      </section>
+
+      <section id="session" class="section searchable" data-search="session token restore persist login logout startSession setSession clearSession refreshAccount">
+        <div class="section-heading">
+          <p class="eyebrow">Session</p>
+          <h2>恢复、刷新与退出</h2>
+          <p>Android 和 iOS 都会在配置客户端时自动恢复 Session，并在 Session 变化后自动保存。iOS 继续兼容原版插件的 UserDefaults 键；Android 使用插件私有存储。两端都通过 <code>sessionStorageKeyPrefix</code> 隔离不同产品的会话。</p>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 启动流程</span><button class="copy" type="button">复制</button></div>
+          <pre><code>Future&lt;SharedCoreAccountSnapshot&gt; bootstrapAccount(
+  SharedCoreClient client,
+) async {
+  // configure 已自动恢复持久化 Session。
+  if ((await client.accessToken).isEmpty) {
+    await client.startSession();
+  }
+
+  return client.refreshAccount();
+}</code></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 登录与退出</span><button class="copy" type="button">复制</button></div>
+          <pre><code>final account = await client.login(
+  email: email,
+  password: password,
+);
+
+// 登录成功后自动持久化；退出时自动删除持久化 Session。
+await client.clearSession();</code></pre>
+        </div>
+        <div class="grid">
+          <article class="card"><h3>首次安装</h3><p>创建客户端后调用 <code>startSession()</code>，再读取账号快照。</p></article>
+          <article class="card"><h3>恢复登录</h3><p><code>configure()</code> 自动恢复 Session；检测到已有 token 后直接刷新账号。</p></article>
+          <article class="card"><h3>并发过期</h3><p>授权请求遇到 Session 失效时，插件会合并并发刷新并只重试一次。</p></article>
+        </div>
+        <div class="callout warning"><strong>Android 0.2.1 升级：</strong>旧版由 App 自己保存的 Session 无法自动定位。已登录用户首次升级到 0.3.0 时，应从原存储读取一次并调用 <code>setSession(accessToken: oldToken)</code>；插件会自动刷新账号、补齐完整 Session，后续冷启动会自动恢复。</div>
+      </section>
+
+      <section id="recipes" class="section searchable" data-search="recipe 首页 template history upload video image 图生图 task polling style sensitive words delete">
+        <div class="section-heading">
+          <p class="eyebrow">Recipes</p>
+          <h2>常见业务流程</h2>
+          <p>建议在 Repository 中封装这些组合流程，Widget 只消费页面需要的状态。</p>
+        </div>
+        <h3>首页和模板</h3>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 首页数据</span><button class="copy" type="button">复制</button></div>
+          <pre><code>final home = await client.loadHomeContent();
+
+for (final menu in home.menuList) {
+  final modules = home.menuModuleMap[menu.title] ?? const [];
+  // 将 menu 和 modules 映射成页面状态。
+}
+
+final templates = await client.loadVideoTemplateItems(
+  page: 1,
+  pageSize: 20,
+  isHome: true,
+);</code></pre>
+        </div>
+        <h3>上传并提交生成</h3>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 视频任务</span><button class="copy" type="button">复制</button></div>
+          <pre><code>final submission = await client.submitVideoTask(
+  SharedCoreSubmitVideoOptions(
+    imagePath: localImagePath,
+    prompt: 'cinematic portrait',
+    templateId: 42,
+    duration: 5,
+  ),
+);
+
+final task = await client.loadGenerationTaskInfo(submission.promptId);
+switch (task.status) {
+  case SharedCoreTaskStatus.succeeded:
+    showResults(task.originUrls);
+  case SharedCoreTaskStatus.failed:
+    showTaskFailure();
+  case SharedCoreTaskStatus.unknown:
+  case SharedCoreTaskStatus.queued:
+  case SharedCoreTaskStatus.running:
+    scheduleNextPoll();
+}</code></pre>
+        </div>
+        <h3>图生图任务</h3>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 上传本地图片并提交</span><button class="copy" type="button">复制</button></div>
+          <pre><code>final submission = await client.submitImageTaskFromImagePath(
+  imagePath: localImagePath,
+  style: SharedCoreImageStyle.absDefineToned,
+);
+
+// 如果已经有服务端 URL，也可以跳过上传：
+final another = await client.submitImageTaskFromImageUrl(
+  imageUrl: uploadedUrl,
+  style: SharedCoreImageStyle.chestModerate,
+);</code></pre>
+        </div>
+        <div class="callout warning"><strong>文件路径必须可被原生进程读取。</strong>内容 URI、受限相册资源或云端占位文件应先由 Flutter/平台层转换成可访问的本地路径。</div>
+      </section>
+
+      <section id="purchase" class="section searchable" data-search="purchase storekit billing receipt apple google subscription verify">
+        <div class="section-heading">
+          <p class="eyebrow">Purchases</p>
+          <h2>商店购买与服务端验证</h2>
+          <p>插件会根据当前运行平台自动选择 Apple 或 Google 验证接口，并根据 v2 商品目录自动判断一次性购买或订阅。发起购买、恢复购买和监听交易仍由 StoreKit/Google Play 对应的 Flutter 插件完成。</p>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 通用验证入口</span><button class="copy" type="button">复制</button></div>
+          <pre><code>final result = await client.verifyPurchase(
+  productId: purchase.productID,
+  purchaseData: purchaseData,
+);
+
+if (result.isSuccess) {
+  await client.refreshAccount();
+}</code></pre>
+        </div>
+        <div class="grid">
+          <article class="card"><h3>一次性购买</h3><p>只有 v2 <code>creditPage.purchaseList</code> 中的商品会走一次性内购验证。</p></article>
+          <article class="card"><h3>订阅</h3><p>v2 商品目录中的其他商品全部走订阅验证。</p></article>
+          <article class="card"><h3>iOS purchaseData</h3><p>传入 Apple receipt data。</p></article>
+          <article class="card"><h3>Android purchaseData</h3><p>传入 Google Play purchase token。</p></article>
+        </div>
+        <div class="callout"><strong>无需提前加载目录。</strong>如果 App 尚未调用 <code>loadPurchaseCatalog()</code>，首次验证时插件会自动加载并缓存 v2 商品目录。找不到 <code>productId</code> 时会抛出 <code>purchase_product_not_found</code>，不会猜测购买类型。</div>
+      </section>
+
+      <section id="errors" class="section searchable" data-search="error exception backendCode localError network timeout httpStatus 后端 本地">
+        <div class="section-heading">
+          <p class="eyebrow">Errors</p>
+          <h2>统一捕获 SharedCoreException</h2>
+          <p>插件内部的网络、后端业务和本机错误都会转换为稳定的 <code>SharedCoreException</code>。一个异常只会属于后端错误或本地错误，不需要同时判断多套错误字段。</p>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><span>Dart · 错误分流</span><button class="copy" type="button">复制</button></div>
+          <pre><code>try {
+  final home = await client.loadHomeContent();
+  emit(HomeReady(home));
+} on SharedCoreException catch (error) {
+  if (error.isBackendError) {
+    // backendCode 和 message 均来自后端响应。
+    emit(HomeBackendFailure(
+      code: error.backendCode!,
+      message: error.message,
+    ));
+  } else {
+    switch (error.localError!) {
+      case SharedCoreLocalError.network:
+      case SharedCoreLocalError.timeout:
+        emit(HomeNetworkFailure(error.message));
+      default:
+        emit(HomeLocalFailure(error.message));
+    }
+  }
+}</code></pre>
+        </div>
+        <dl class="meta">
+          <dt>backendCode</dt><dd>后端响应中的业务码。本地错误时为 <code>null</code>。</dd>
+          <dt>localError</dt><dd>本地错误枚举。后端业务错误时为 <code>null</code>。</dd>
+          <dt>message</dt><dd>后端错误时是后端返回的 <code>msg/message</code>（缺失时使用插件提供的说明）；本地错误时是本机诊断信息。</dd>
+          <dt>httpStatus</dt><dd>可以取得 HTTP 状态码时返回；否则为 <code>null</code>。</dd>
+          <dt>isBackendError</dt><dd><code>backendCode != null</code> 的便捷判断。</dd>
+          <dt>isLocalError</dt><dd><code>localError != null</code> 的便捷判断。</dd>
+        </dl>
+        <div class="callout"><strong>不会同时出现两种来源。</strong>后端返回业务失败时只设置 <code>backendCode</code>；网络中断、超时、参数校验、解析失败、平台能力等问题只设置 <code>localError</code>。没有后端业务包裹的 HTTP 失败归类为 <code>SharedCoreLocalError.http</code>，并尽可能携带 <code>httpStatus</code>。</div>
+        <h3>本地错误枚举</h3>
+        <div id="error-codes" class="error-grid"></div>
+      </section>
+
+      <section id="support" class="section searchable" data-search="platform target architecture arm64 android ios x86 支持平台">
+        <div class="section-heading">
+          <p class="eyebrow">Platforms</p>
+          <h2>支持平台</h2>
+          <p>宿主 App 必须使用当前版本支持的目标架构。</p>
+        </div>
+        <table class="support-table">
+          <thead><tr><th>目标</th><th>状态</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>Android ARM64</td><td class="yes">支持</td><td>64 位 Android 真机</td></tr>
+            <tr><td>iOS ARM64 真机</td><td class="yes">支持</td><td>iPhone/iPad 真机</td></tr>
+            <tr><td>iOS ARM64 模拟器</td><td class="yes">支持</td><td>Apple Silicon Mac 模拟器</td></tr>
+            <tr><td>x86 / x86_64</td><td class="no">不支持</td><td>当前版本未提供</td></tr>
+            <tr><td>32 位 ARM</td><td class="no">不支持</td><td>当前版本未提供</td></tr>
+          </tbody>
+        </table>
+        <div class="callout success"><strong>无需额外平台接入步骤。</strong>保持插件包完整，并按照普通 Flutter App 流程构建即可。</div>
+      </section>
+
+      <section id="methods" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">API Reference</p>
+          <h2>插件调用 API</h2>
+          <p>这里只列出 Flutter App 在初始化、账号和业务流程中会主动调用的方法，不包含诊断、测试或内部状态维护入口。</p>
+        </div>
+        <div id="method-list" class="method-list"></div>
+      </section>
+
+      <section id="models" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Models</p>
+          <h2>业务数据模型</h2>
+          <p>这些是调用插件时会传入或返回的类型。页面和 Repository 可以直接依赖它们；不要导入 <code>src/</code> 下的非公开类型。</p>
+        </div>
+        <div id="model-list" class="model-list"></div>
+      </section>
+
+      <div id="empty" class="empty">没有找到匹配内容。</div>
+      <footer>sharedcore_flutter 0.3.0 · Flutter 插件使用手册 · 更新于 2026-08-02</footer>
+    </main>
+  </div>
+
+  <script>
+    const methods = [
+      { n: "SharedCore.configure", s: "static Future<SharedCoreClient> configure(SharedCoreConfiguration configuration)", d: "自动采集设备信息并配置进程级全局客户端。", p: "configuration", r: "Future<SharedCoreClient>", note: "同配置幂等；不同配置抛出 SharedCoreLocalError.alreadyConfigured。" },
+      { n: "SharedCore.instance", s: "static SharedCoreClient get instance", d: "读取已经配置的全局客户端。", p: "无", r: "SharedCoreClient", note: "配置前访问会抛出 SharedCoreLocalError.notConfigured。" },
+      { n: "SharedCore.isConfigured", s: "static bool get isConfigured", d: "判断全局客户端是否已经配置成功。", p: "无", r: "bool", note: "适合存在多个启动入口的应用避免重复组织初始化流程。" },
+      { n: "session", s: "Future<SharedCoreSession> session()", d: "读取当前完整 Session。", p: "无", r: "Future<SharedCoreSession>", note: "Android 和 iOS 都会自动持久化；通常只在业务需要完整会话快照时读取。", tag: "高级", kind: "advanced" },
+      { n: "accessToken", s: "Future<String> get accessToken", d: "读取当前 access token。", p: "无", r: "Future<String>", note: "无 Session 时返回空字符串。" },
+      { n: "email", s: "Future<String> get email", d: "读取当前账号邮箱。", p: "无", r: "Future<String>", note: "未绑定邮箱时为空。" },
+      { n: "hasBindEmail", s: "Future<bool> get hasBindEmail", d: "判断 Session 是否包含非空邮箱。", p: "无", r: "Future<bool>", note: "忽略邮箱首尾空白。" },
+      { n: "setSession", s: "Future<void> setSession({required String accessToken})", d: "导入 accessToken，自动刷新账号并补齐完整 Session。", p: "accessToken", r: "Future<void>", note: "会发起网络请求；成功后 Android 和 iOS 都会自动保存完整 Session。" },
+      { n: "clearSession", s: "Future<void> clearSession()", d: "退出并清空当前 Session。", p: "无", r: "Future<void>", note: "Android 和 iOS 都会同步删除持久化会话。" },
+      { n: "startSession", s: "Future<void> startSession()", d: "为当前设备启动或刷新后端 Session。", p: "无", r: "Future<void>", note: "首次安装通常调用此入口。" },
+      { n: "refreshAccount", s: "Future<SharedCoreAccountSnapshot> refreshAccount()", d: "刷新账号、积分、会员和运营配置。", p: "无", r: "Future<SharedCoreAccountSnapshot>", note: "成功后同步更新内部 Session。" },
+      { n: "bindEmail", s: "Future<SharedCoreAccountSnapshot> bindEmail({required String email, required String password})", d: "为当前账号绑定邮箱密码。", p: "email、password", r: "Future<SharedCoreAccountSnapshot>", note: "需要有效 Session。" },
+      { n: "updatePassword", s: "Future<SharedCoreAccountSnapshot> updatePassword(String newPassword)", d: "更新当前邮箱账号密码。", p: "newPassword", r: "Future<SharedCoreAccountSnapshot>", note: "当前账号必须已经绑定邮箱。" },
+      { n: "login", s: "Future<SharedCoreAccountSnapshot> login({String? email, String? password, String? threeToken})", d: "使用邮箱密码或第三方 token 登录。", p: "email/password 或 threeToken", r: "Future<SharedCoreAccountSnapshot>", note: "两种模式不要混用；成功后替换 Session。" },
+      { n: "uploadUserDeviceIdentifiers", s: "Future<void> uploadUserDeviceIdentifiers(SharedCoreSingularIdentifiers identifiers)", d: "上传归因和广告设备标识。", p: "identifiers", r: "Future<void>", note: "相关标识统一封装在值对象中。" },
+      { n: "exchangeCode", s: "Future<bool> exchangeCode(String code)", d: "提交兑换码并返回兑换是否成功。", p: "code", r: "Future<bool>", note: "响应 JSON 的 code == 200 返回 true，其他业务 code 返回 false；网络或解析错误仍抛出异常。" },
+      { n: "loadHomeContent", s: "Future<SharedCoreHomeContent> loadHomeContent()", d: "加载类型化首页菜单和模块。", p: "无", r: "Future<SharedCoreHomeContent>", note: "授权请求。" },
+      { n: "loadVideoTemplateItems", s: "Future<List<SharedCoreTemplateItem>> loadVideoTemplateItems({int page = 1, int pageSize = 20, bool isHome = false})", d: "分页加载视频模板。", p: "page、pageSize、isHome", r: "Future<List<SharedCoreTemplateItem>>", note: "page 和 pageSize 必须大于零。" },
+      { n: "loadVideoItems", s: "Future<List<SharedCoreTemplateItem>> loadVideoItems(List<int> ids)", d: "按标识批量加载视频模板。", p: "ids", r: "Future<List<SharedCoreTemplateItem>>", note: "空列表返回空结果。" },
+      { n: "loadVideoHistoryItems", s: "Future<List<SharedCoreHistoryItem>> loadVideoHistoryItems({int page = 1, int pageSize = 20})", d: "分页加载视频生成历史。", p: "page、pageSize", r: "Future<List<SharedCoreHistoryItem>>", note: "page 和 pageSize 必须大于零。" },
+      { n: "loadImageHistoryItems", s: "Future<List<SharedCoreHistoryItem>> loadImageHistoryItems({int page = 1, int pageSize = 20})", d: "分页加载图片生成历史。", p: "page、pageSize", r: "Future<List<SharedCoreHistoryItem>>", note: "page 和 pageSize 必须大于零。" },
+      { n: "loadGenerationTaskInfo", s: "Future<SharedCoreTaskInfo> loadGenerationTaskInfo(String promptId)", d: "查询生成任务状态和结果资源。", p: "promptId", r: "Future<SharedCoreTaskInfo>", note: "轮询频率和停止时机由 App 控制。" },
+      { n: "uploadFile", s: "Future<SharedCoreUploadResult> uploadFile(String filePath)", d: "上传本地文件并返回可访问的文件地址。", p: "filePath", r: "Future<SharedCoreUploadResult>", note: "返回值包含服务端文件 URL。" },
+      { n: "submitVideoTask", s: "Future<SharedCoreGenerationSubmission> submitVideoTask(SharedCoreSubmitVideoOptions options)", d: "提交视频生成任务。", p: "options", r: "Future<SharedCoreGenerationSubmission>", note: "返回 promptId 用于查询状态。" },
+      { n: "submitImageTaskFromImageUrl", s: "Future<SharedCoreGenerationSubmission> submitImageTaskFromImageUrl({required String imageUrl, required SharedCoreImageStyle style})", d: "使用已经上传的图片 URL 提交图生图任务。", p: "imageUrl、style", r: "Future<SharedCoreGenerationSubmission>", note: "imageUrl 不能为空；style 会自动转换为服务端 styleId。" },
+      { n: "submitImageTaskFromImagePath", s: "Future<SharedCoreGenerationSubmission> submitImageTaskFromImagePath({required String imagePath, required SharedCoreImageStyle style})", d: "上传本地图片并连续提交图生图任务。", p: "imagePath、style", r: "Future<SharedCoreGenerationSubmission>", note: "内部完成上传和任务提交。" },
+      { n: "deleteHistoryItems", s: "Future<SharedCoreDeleteResult> deleteHistoryItems(List<int> ids)", d: "按标识删除历史记录。", p: "ids", r: "Future<SharedCoreDeleteResult>", note: "参数是需要删除的历史记录 ID。" },
+      { n: "loadPurchaseCatalog", s: "Future<SharedCorePurchaseCatalog> loadPurchaseCatalog()", d: "加载积分、订阅、试用和折扣商品目录。", p: "无", r: "Future<SharedCorePurchaseCatalog>", note: "商店商品详情仍应通过 StoreKit/Google Play 获取。" },
+      { n: "verifyPurchase", s: "Future<SharedCorePurchaseVerificationResult> verifyPurchase({required String productId, required String purchaseData})", d: "验证当前平台的购买或订阅。", p: "productId、purchaseData", r: "Future<SharedCorePurchaseVerificationResult>", note: "平台和购买类型均自动判断；iOS 的 purchaseData 是 receipt data，Android 是 purchase token。" },
+      { n: "loadSensitiveWords", s: "Future<List<String>> loadSensitiveWords()", d: "加载后端敏感词列表。", p: "无", r: "Future<List<String>>", note: "返回字符串列表。" }
+    ];
+
+    const models = [
+      { n: "SharedCoreConfiguration", d: "配置全局客户端时使用的完整运行配置。", f: [["baseUrl", "String", "后端根地址"], ["appId", "String", "应用标识"], ["deviceOverrides", "SharedCoreDeviceOverrides", "可选设备信息覆盖值"], ["signSecret", "String?", "null 使用插件内置默认值；非 null 原样使用"], ["sessionStorageKeyPrefix", "String", "Android/iOS Session 存储键前缀，默认 SharedCore"], ["endpointPaths", "Map<SharedCoreEndpoint, String>", "custom 模式要求完整的 21 项路径映射"], ["apiPathMode", "SharedCoreApiPathMode", "builtIn、custom 或 bundleDerived"], ["testServerMode", "bool", "true 时强制内置测试服地址和未混淆真实路径"], ["requestTimeout", "Duration", "单次 API 总超时"], ["jsonNoisePrefix / jsonNoiseFieldCount", "String? / int", "builtIn/custom 原样使用；bundleDerived 时忽略并自动派生前缀、固定数量 20"], ["http", "SharedCoreHttpConfiguration", "网络参数"]] },
+      { n: "SharedCoreApiPathMode", d: "生产 API 路径选择策略；testServerMode 为 true 时会被覆盖。", f: [["builtIn", "enum", "插件内置真实路径"], ["custom", "enum", "调用者提供全部 21 个路径"], ["bundleDerived", "enum", "Bundle ID 派生混淆路径和 JSON noise 配置"]] },
+      { n: "SharedCoreHttpConfiguration", d: "可选网络传输设置；大多数 App 使用默认值即可。", f: [["connectTimeout", "Duration", "建立连接超时，默认 60 秒"], ["readTimeout", "Duration", "连续读取空闲超时，默认 60 秒"], ["proxyUrl", "String?", "显式 HTTP(S) 代理"], ["userAgent", "String", "默认 User-Agent"], ["maxResponseBodyBytes", "int?", "可选响应体大小上限"]] },
+      { n: "SharedCoreDeviceOverrides", d: "可选设备覆盖配置；不传时插件自动采集。", f: [["vpn / hasWeChatOrQQInstalled", "bool?", "非 null 时覆盖自动检测结果"], ["networkOperator / simOperator", "String?", "运营商覆盖值"], ["templateLanguage", "String?", "覆盖自动语言选择"], ["installReferrer", "String?", "业务侧安装来源"]] },
+      { n: "SharedCoreEndpoint", d: "高级路径覆盖枚举；以下 21 个成员与实际 API 路径逐项对应（枚举名省略前导 /），使用默认路径时无需设置。", f: [["saveDevice", "enum", "/saveDevice"], ["homeDataNew", "enum", "/homeDataNew"], ["videoTaskHistory", "enum", "/videoTaskHistory"], ["userAlbum", "enum", "/userAlbum"], ["videoList", "enum", "/videoList"], ["getTaskInfo", "enum", "/getTaskInfo"], ["videoDel", "enum", "/videoDel"], ["submitVideo", "enum", "/submitVideo"], ["upload", "enum", "/upload"], ["sensitiveWords", "enum", "/sensitiveWords"], ["submitWaveSpeed", "enum", "/submitWaveSpeed"], ["getVideoListByIds", "enum", "/getVideoListByIds"], ["rechargePurchaseListV2", "enum", "/rechargePurchaseListV2"], ["applePurchase", "enum", "/applePurchase"], ["subscribeApple", "enum", "/subscribeApple"], ["googlePurchase", "enum", "/googlePurchase"], ["subscribeGoogle", "enum", "/subscribeGoogle"], ["bindEmail", "enum", "/bindEmail"], ["login", "enum", "/login"], ["updateUserData", "enum", "/updateUserData"], ["exchangeCode", "enum", "/exchangeCode"]] },
+      { n: "SharedCoreSession", d: "一个客户端当前持有的会话状态。", f: [["accessToken", "String", "有效 Session 的必要字段"], ["userId", "String", "后端用户标识"], ["email", "String", "绑定邮箱"]] },
+      { n: "SharedCoreSingularIdentifiers", d: "归因和广告设备标识集合。", f: [["sdid / idfa / idfv", "String", "Singular 与 Apple 标识"], ["aifa / asid / amid", "String", "广告归因标识"], ["oaid / andi", "String", "Android 设备标识"]] },
+      { n: "SharedCoreSubmitVideoOptions", d: "视频生成任务参数。", f: [["imagePath", "String", "本地图片路径"], ["prompt", "String", "生成提示词"], ["templateId", "int", "模板标识"], ["videoExtend / oldTaskId", "int", "任务扩展来源"], ["definition / duration / variation", "int", "输出清晰度、时长和变体"]] },
+      { n: "SharedCoreImageStyle", d: "图生图任务的类型安全风格枚举；调用方无需填写裸数字 styleId。", f: [["chestModerate / chestBusty", "1 / 2", "Chest — Moderate / Busty"], ["buttCurvy / buttThick", "3 / 4", "Butt — Curvy / Thick"], ["slimWaistTrim / slimWaistSlim", "5 / 6", "Slim Waist — Trim / Slim"], ["absDefineToned / absDefineRipped", "7 / 8", "Abs Define — Toned / Ripped"]] },
+      { n: "SharedCoreAccountSnapshot", d: "账号、积分、会员和运营信息的统一快照。", f: [["userId / email", "String", "身份信息"], ["credits", "SharedCoreCreditBalance", "积分结构"], ["membership / isPro / wasPro", "String / bool", "会员状态"], ["freeCredits / paidCredits / totalCredits", "int", "便捷积分字段"], ["subscription*", "多个字段", "订阅状态、计划和到期时间"], ["replacementApp", "SharedCoreReplacementApp", "替代应用配置"]] },
+      { n: "SharedCoreCreditBalance", d: "账号积分余额。", f: [["free", "int", "免费积分"], ["paid", "int", "付费积分"], ["total", "int", "总积分"]] },
+      { n: "SharedCoreReplacementApp", d: "后端下发的替代应用配置。", f: [["downloadURLString", "String", "下载地址"], ["webURLString", "String", "网页地址"], ["isEnabled", "bool", "读取后端 enabled/newAppEnabled；缺失或无法解析时为 false"]] },
+      { n: "SharedCoreHomeContent", d: "类型化首页结构。", f: [["menuList", "List<SharedCoreHomeMenu>", "首页菜单"], ["menuModuleMap", "Map<String, List<SharedCoreHomeModule>>", "菜单到模块的映射"]] },
+      { n: "SharedCoreHomeMenu", d: "首页菜单条目。", f: [["title", "String", "菜单标题，也是模块映射键"]] },
+      { n: "SharedCoreHomeModule", d: "首页菜单下的业务模块。", f: [["title", "String", "模块标题"], ["moduleName", "String", "模块名称"], ["paramIds", "List<int>", "模块关联参数标识"]] },
+      { n: "SharedCoreTemplateItem", d: "视频模板条目。", f: [["templateId", "int", "模板标识"], ["title / prompt / author", "String", "文本信息"], ["thumbUrl / coveringUrl / videoUrl", "String", "资源地址"], ["favoriteCount", "int", "收藏数"], ["isVipOnly", "bool", "是否会员限定"]] },
+      { n: "SharedCoreHistoryItem", d: "图片或视频生成历史。", f: [["type", "String", "video 或 image"], ["recordId", "int", "记录标识"], ["title / reason", "String", "标题和失败原因"], ["coveringUrl / originUrl", "String", "结果资源"], ["stateCode / createdAt / styleId", "int", "状态、时间和样式"], ["canExtend", "bool?", "是否可扩展"]] },
+      { n: "SharedCoreTaskInfo", d: "生成任务状态与产物。", f: [["promptId", "String", "任务标识"], ["stateCode", "int", "服务端状态码"], ["status", "SharedCoreTaskStatus", "unknown/queued/running/succeeded/failed"], ["ids", "List<int>", "生成记录标识"], ["originUrls", "List<String>", "结果 URL"]] },
+      { n: "SharedCoreTaskStatus", d: "生成任务的归一化状态。", f: [["unknown", "enum", "未知状态"], ["queued", "enum", "等待处理"], ["running", "enum", "正在生成"], ["succeeded", "enum", "生成成功"], ["failed", "enum", "生成失败"]] },
+      { n: "SharedCoreUploadResult", d: "文件上传结果。", f: [["url", "String", "服务端可访问的文件 URL"]] },
+      { n: "SharedCoreGenerationSubmission", d: "生成任务提交结果。", f: [["promptId", "String", "后续查询任务使用的标识"]] },
+      { n: "SharedCoreDeleteResult", d: "历史删除结果。", f: [["isDeleted", "bool", "业务删除是否成功"]] },
+      { n: "SharedCorePurchaseItem", d: "后端商品目录中的单个商品。", f: [["itemId / productId", "int / String", "后端条目标识与商店商品标识"], ["price", "double", "后端配置价格"], ["amount / giftAmount", "int", "积分数量与赠送数量"], ["type / pageType / cycle / isShow", "int", "商品分类与展示配置"], ["subscriptionPeriod", "String", "订阅周期"], ["freeTryDays", "int", "免费试用天数"]] },
+      { n: "SharedCorePurchaseCatalog", d: "按产品页面用途归类的商品目录。", f: [["schemaVersion", "int", "目录结构版本"], ["creditPagePurchaseItems", "List<SharedCorePurchaseItem>", "积分购买商品"], ["creditPageSubscribeItems", "List<SharedCorePurchaseItem>", "积分页订阅商品"], ["subscribePage*", "SharedCorePurchaseItem?", "试用、周订阅、年订阅"], ["discountPageDiscountItem", "SharedCorePurchaseItem?", "折扣商品"], ["secretPageSecretItem", "SharedCorePurchaseItem?", "隐藏商品"]] },
+      { n: "SharedCorePurchaseVerificationResult", d: "服务端票据验证后的稳定结果。", f: [["isSuccess", "bool", "验证是否成功"], ["isTrial", "bool", "是否试用"], ["status", "String", "归一化状态"]] },
+      { n: "SharedCoreLocalError", d: "插件、本机或平台产生的稳定错误分类枚举。", f: [["network / timeout / http", "enum", "网络与 HTTP 错误"], ["invalidArgument / invalidState", "enum", "调用参数与状态错误"], ["parse / upload / download / cache / task", "enum", "本地处理错误"], ["permissionDenied / unsupportedPlatform / platform", "enum", "平台能力错误"], ["deviceInfoUnavailable / sessionStorageUnavailable", "enum", "原生设备信息与 Session 存储错误"], ["purchaseProductNotFound / paymentVerification", "enum", "购买流程的本地错误"]] },
+      { n: "SharedCoreException", d: "插件公开的统一异常类型；后端与本地来源二选一。", f: [["backendCode", "int?", "后端业务码；本地错误时为 null"], ["localError", "SharedCoreLocalError?", "本地错误类型；后端错误时为 null"], ["message", "String", "后端消息或本机诊断信息"], ["httpStatus", "int?", "可取得的 HTTP 状态码"], ["isBackendError / isLocalError", "bool", "错误来源便捷判断"]] }
+    ];
+
+    const errorCodes = ["cancelled", "invalidArgument", "invalidState", "notConfigured", "alreadyConfigured", "network", "timeout", "http", "parse", "paymentVerification", "upload", "download", "cache", "permissionDenied", "task", "unsupportedPlatform", "purchaseProductNotFound", "deviceInfoUnavailable", "sessionStorageUnavailable", "platform", "unknown"];
+
+    function slug(value) {
+      return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    }
+
+    function escapeHtml(value) {
+      return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    const dartKeywords = new Set([
+      "abstract", "as", "assert", "async", "await", "break", "case", "catch",
+      "class", "const", "continue", "covariant", "default", "deferred", "do",
+      "dynamic", "else", "enum", "export", "extends", "extension", "external",
+      "factory", "false", "final", "finally", "for", "Function", "get", "hide",
+      "if", "implements", "import", "in", "interface", "is", "late", "library",
+      "mixin", "new", "null", "of", "on", "operator", "part", "required",
+      "rethrow", "return", "sealed", "set", "show", "static", "super", "switch",
+      "sync", "this", "throw", "true", "try", "typedef", "var", "void", "when",
+      "while", "with", "yield"
+    ]);
+
+    const dartBuiltins = new Set([
+      "bool", "double", "Duration", "Future", "int", "List", "Map", "Never",
+      "num", "Object", "Set", "String", "Uri"
+    ]);
+
+    function highlightSource(source, language) {
+      const pattern = /\/\/[^\n]*|#[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b\d+(?:\.\d+)?\b|\b[A-Za-z_$][\w$]*\b/g;
+      let result = "";
+      let cursor = 0;
+      let match;
+
+      while ((match = pattern.exec(source)) !== null) {
+        result += escapeHtml(source.slice(cursor, match.index));
+        const token = match[0];
+        const head = source.slice(0, match.index);
+        const tail = source.slice(pattern.lastIndex);
+        let kind = "";
+
+        if (token.startsWith("//") || token.startsWith("#") || token.startsWith("/*")) {
+          kind = "comment";
+        } else if (token.startsWith("\"") || token.startsWith("'")) {
+          kind = "string";
+        } else if (/^\d/.test(token)) {
+          kind = "number";
+        } else if (token === "true" || token === "false" || token === "null") {
+          kind = "literal";
+        } else if (language === "xml" && /<\/?$/.test(head)) {
+          kind = "keyword";
+        } else if (dartKeywords.has(token)) {
+          kind = "keyword";
+        } else if (dartBuiltins.has(token) || /^[A-Z]/.test(token)) {
+          kind = "type";
+        } else if (/^\s*:/.test(tail)) {
+          kind = "property";
+        } else if (language === "dart" && /^\s*\(/.test(tail)) {
+          kind = "function";
+        }
+
+        result += kind
+          ? '<span class="token-' + kind + '">' + escapeHtml(token) + '</span>'
+          : escapeHtml(token);
+        cursor = pattern.lastIndex;
+      }
+
+      return result + escapeHtml(source.slice(cursor));
+    }
+
+    function highlightAllCode() {
+      document.querySelectorAll(".code-block").forEach(function(block) {
+        const code = block.querySelector("pre code");
+        if (!code || code.dataset.highlighted === "true") return;
+        const label = (block.querySelector(".code-label span")?.textContent || "").toLowerCase();
+        const language = label.includes("yaml") || label.includes("pubspec")
+          ? "yaml"
+          : label.includes("xml") || label.includes("plist")
+            ? "xml"
+            : "dart";
+        code.innerHTML = highlightSource(code.textContent, language);
+        code.dataset.highlighted = "true";
+      });
+    }
+
+    function renderMethods() {
+      const index = document.getElementById("method-index");
+      const list = document.getElementById("method-list");
+      methods.forEach(function(method) {
+        const id = "method-" + slug(method.n);
+        index.insertAdjacentHTML("beforeend", '<a href="#' + id + '">' + method.n + '</a>');
+        const badgeClass = method.kind ? " " + method.kind : "";
+        const badgeText = method.tag || "常用";
+        list.insertAdjacentHTML("beforeend",
+          '<article id="' + id + '" class="method-card searchable" data-search="' + method.n + ' ' + method.d + ' ' + method.r + '">' +
+            '<div class="method-head"><h3>' + method.n + '</h3><span class="badge' + badgeClass + '">' + badgeText + '</span></div>' +
+            '<p>' + method.d + '</p>' +
+            '<div class="code-block"><div class="code-label"><span>Dart 签名</span><button class="copy" type="button">复制</button></div><pre><code>' + escapeHtml(method.s) + '</code></pre></div>' +
+            '<dl class="meta"><dt>参数</dt><dd>' + method.p + '</dd><dt>返回</dt><dd><code>' + escapeHtml(method.r) + '</code></dd><dt>行为</dt><dd>' + method.note + '</dd></dl>' +
+          '</article>');
+      });
+    }
+
+    function renderModels() {
+      const index = document.getElementById("model-index");
+      const list = document.getElementById("model-list");
+      models.forEach(function(model) {
+        const id = "model-" + slug(model.n);
+        index.insertAdjacentHTML("beforeend", '<a href="#' + id + '">' + model.n + '</a>');
+        const rows = model.f.map(function(field) {
+          return '<tr><td><code>' + field[0] + '</code></td><td><code>' + escapeHtml(field[1]) + '</code></td><td>' + field[2] + '</td></tr>';
+        }).join("");
+        list.insertAdjacentHTML("beforeend",
+          '<article id="' + id + '" class="model-card searchable" data-search="' + model.n + ' ' + model.d + ' ' + model.f.flat().join(" ") + '">' +
+            '<h3>' + model.n + '</h3><p>' + model.d + '</p>' +
+            '<table class="field-table"><thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+          '</article>');
+      });
+    }
+
+    function bindCopyButtons() {
+      document.querySelectorAll(".copy").forEach(function(button) {
+        button.addEventListener("click", async function() {
+          const code = button.closest(".code-block").querySelector("code").textContent;
+          try {
+            await navigator.clipboard.writeText(code);
+            const old = button.textContent;
+            button.textContent = "已复制";
+            setTimeout(function() { button.textContent = old; }, 1200);
+          } catch (_) {
+            button.textContent = "请手动复制";
+          }
+        });
+      });
+    }
+
+    function bindSearch() {
+      const input = document.getElementById("search");
+      const items = Array.from(document.querySelectorAll(".searchable"));
+      input.addEventListener("input", function() {
+        const query = input.value.trim().toLowerCase();
+        let visible = 0;
+        items.forEach(function(item) {
+          const text = ((item.dataset.search || "") + " " + item.textContent).toLowerCase();
+          const show = !query || text.includes(query);
+          item.style.display = show ? "" : "none";
+          if (show) visible += 1;
+        });
+        document.getElementById("empty").style.display = visible ? "none" : "block";
+      });
+    }
+
+    renderMethods();
+    renderModels();
+    highlightAllCode();
+    errorCodes.forEach(function(code) {
+      document.getElementById("error-codes").insertAdjacentHTML("beforeend", '<span class="error-chip">' + code + '</span>');
+    });
+    bindCopyButtons();
+    bindSearch();
+  </script>
+</body>
+</html>
