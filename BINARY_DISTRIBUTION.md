@@ -9,7 +9,7 @@ the private `shared_core_rust` repository and must never be copied here.
 - FRB-generated Dart glue under `lib/src/generated/`
 - Android ARM64 shared library under `android/src/main/jniLibs/arm64-v8a/`
 - iOS ARM64 static libraries packaged as an XCFramework under
-  `ios/Frameworks/`
+  `ios/sharedcore_flutter/Frameworks/`
 - Minimal Swift/header linkage glue under `ios/Classes/`
 
 ## Build from the private repository

@@ -16,7 +16,7 @@ Binary Flutter bindings for SharedCore Rust.
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*.{c,h,swift}'
   s.public_header_files = 'Classes/**/*.h'
-  s.vendored_frameworks = 'Frameworks/sharedcore_flutter.xcframework'
+  s.vendored_frameworks = 'sharedcore_flutter/Frameworks/SharedCoreRustBinary.xcframework'
   s.static_framework = true
   s.dependency 'Flutter'
   s.platform = :ios, '13.0'

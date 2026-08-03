@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 import 'configuration.dart';
 import 'device_info_collector.dart';
@@ -23,7 +25,11 @@ abstract final class SharedCore {
 
   static Future<void> _initializeRust() async {
     try {
-      await SharedCoreRustLib.init();
+      await SharedCoreRustLib.init(
+        externalLibrary: Platform.isIOS
+            ? ExternalLibrary.process(iKnowHowToUseIt: true)
+            : null,
+      );
     } on Exception catch (error) {
       throw SharedCoreException(
         localError: SharedCoreLocalError.invalidState,

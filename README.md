@@ -138,7 +138,7 @@ For a focused breaking-change checklist with old/new code examples, see
 
 ```text
 android/src/main/jniLibs/arm64-v8a/libsharedcore_flutter.so
-ios/Frameworks/sharedcore_flutter.xcframework/
+ios/sharedcore_flutter/Frameworks/SharedCoreRustBinary.xcframework/
 lib/src/generated/                    # generated FRB Dart glue
 ```
 

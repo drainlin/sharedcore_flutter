@@ -8,17 +8,15 @@ let package = Package(
     products: [
         .library(
             name: "sharedcore-flutter",
-            type: .dynamic,
+            type: .static,
             targets: ["sharedcore_flutter"]
         )
     ],
-    dependencies: [
-        .package(name: "FlutterFramework", path: "../FlutterFramework")
-    ],
+    dependencies: [],
     targets: [
         .binaryTarget(
             name: "SharedCoreRustBinary",
-            path: "../Frameworks/sharedcore_flutter.xcframework"
+            path: "Frameworks/SharedCoreRustBinary.xcframework"
         ),
         .target(
             name: "sharedcore_flutter_linker",
@@ -28,7 +26,6 @@ let package = Package(
         .target(
             name: "sharedcore_flutter",
             dependencies: [
-                .product(name: "FlutterFramework", package: "FlutterFramework"),
                 "sharedcore_flutter_linker"
             ]
         )

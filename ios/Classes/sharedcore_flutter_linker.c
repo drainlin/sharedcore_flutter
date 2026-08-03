@@ -16,6 +16,7 @@ extern void frb_pde_ffi_dispatcher_sync(void);
 extern void frb_rust_vec_u8_free(void);
 extern void frb_rust_vec_u8_new(void);
 extern void frb_rust_vec_u8_resize(void);
+extern void store_dart_post_cobject(void);
 extern void frbgen_sharedcore_flutter_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustSharedCoreClient(void);
 extern void frbgen_sharedcore_flutter_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustSharedCoreClient(void);
 
@@ -34,6 +35,7 @@ static void *volatile sharedcore_flutter_symbols[] = {
       (void *)&frb_rust_vec_u8_free,
       (void *)&frb_rust_vec_u8_new,
       (void *)&frb_rust_vec_u8_resize,
+      (void *)&store_dart_post_cobject,
       (void *)&frbgen_sharedcore_flutter_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustSharedCoreClient,
       (void *)&frbgen_sharedcore_flutter_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustSharedCoreClient,
 };

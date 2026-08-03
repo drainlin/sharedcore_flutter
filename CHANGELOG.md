@@ -12,6 +12,8 @@ checklist.
   the Flutter plugin.
 - Kept one application-wide `SharedCore` client. Native-library initialization
   and device collection now happen automatically during `configure`.
+- Fixed iOS static Rust-library initialization and symbol retention for both
+  CocoaPods and Swift Package Manager integrations.
 - Replaced required `SharedCoreDeviceConfiguration` with optional
   `SharedCoreDeviceOverrides`; Android and iOS collect platform-owned device
   information automatically.
