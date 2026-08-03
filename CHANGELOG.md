@@ -14,6 +14,8 @@ checklist.
   and device collection now happen automatically during `configure`.
 - Fixed iOS static Rust-library initialization and symbol retention for both
   CocoaPods and Swift Package Manager integrations.
+- Fixed Android release builds by applying the Kotlin Gradle plugin explicitly
+  in the plugin and example projects.
 - Replaced required `SharedCoreDeviceConfiguration` with optional
   `SharedCoreDeviceOverrides`; Android and iOS collect platform-owned device
   information automatically.
