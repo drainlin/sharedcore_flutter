@@ -127,9 +127,10 @@ class SharedCoreClient {
   SharedCoreClient._(
     this.configuration,
     this._inner, {
-    required this._persistsPlatformSession,
-    required this._platform,
-  });
+    required bool persistsPlatformSession,
+    required String platform,
+  }) : _persistsPlatformSession = persistsPlatformSession,
+       _platform = platform;
 
   /// Configuration used to create this client.
   final SharedCoreConfiguration configuration;

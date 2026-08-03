@@ -6,6 +6,7 @@ checklist.
 
 ### Runtime and lifecycle
 
+- Raised the minimum supported toolchain to Flutter 3.38.0 and Dart 3.10.0.
 - Replaced the former C++ platform implementations with a shared Rust core
   accessed through precompiled FRB binaries; Rust source is not distributed in
   the Flutter plugin.

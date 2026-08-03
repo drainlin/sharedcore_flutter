@@ -12,6 +12,8 @@ it deliberately does not ship Rust source code.
 
 x86, x86_64, and 32-bit ARM are intentionally unsupported.
 
+The minimum supported toolchain is Flutter 3.38.0 with Dart 3.10.0.
+
 ## Basic usage
 
 ```dart

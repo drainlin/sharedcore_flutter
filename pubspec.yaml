@@ -4,8 +4,8 @@ version: 0.3.0
 homepage: https://github.com/drainlin/sharedcore_flutter
 
 environment:
-  sdk: ^3.12.2
-  flutter: '>=3.3.0'
+  sdk: '>=3.10.0-290.4.beta <4.0.0'
+  flutter: '>=3.38.0'
 
 dependencies:
   flutter:
