@@ -13,19 +13,12 @@ void main() {
       appId: 'app-id',
       signSecret: 'secret',
       deviceOverrides: SharedCoreDeviceOverrides(installReferrer: 'campaign'),
-      endpointPaths: <SharedCoreEndpoint, String>{
-        SharedCoreEndpoint.homeDataNew: '/home',
-      },
       jsonNoisePrefix: '_custom_',
       jsonNoiseFieldCount: 12,
     );
 
     expect(configuration.appId, 'app-id');
     expect(configuration.deviceOverrides.installReferrer, 'campaign');
-    expect(
-      configuration.endpointPaths[SharedCoreEndpoint.homeDataNew],
-      '/home',
-    );
     expect(configuration.jsonNoisePrefix, '_custom_');
     expect(configuration.jsonNoiseFieldCount, 12);
   });
@@ -70,19 +63,9 @@ void main() {
     expect(error.isLocalError, isFalse);
   });
 
-  test('configuration equality includes endpoint contents', () {
-    const first = SharedCoreConfiguration(
-      appId: 'app-id',
-      endpointPaths: <SharedCoreEndpoint, String>{
-        SharedCoreEndpoint.homeDataNew: '/home',
-      },
-    );
-    const second = SharedCoreConfiguration(
-      appId: 'app-id',
-      endpointPaths: <SharedCoreEndpoint, String>{
-        SharedCoreEndpoint.homeDataNew: '/home',
-      },
-    );
+  test('equivalent configurations compare equal', () {
+    const first = SharedCoreConfiguration(appId: 'app-id');
+    const second = SharedCoreConfiguration(appId: 'app-id');
 
     expect(first, second);
     expect(first.hashCode, second.hashCode);
@@ -203,20 +186,14 @@ void main() {
 
   test('configuration keeps the explicit API path mode', () {
     const builtInPaths = SharedCoreConfiguration(appId: 'app-id');
-    const customPaths = SharedCoreConfiguration(
-      appId: 'app-id',
-      apiPathMode: SharedCoreApiPathMode.custom,
-    );
     const bundleDerivedPaths = SharedCoreConfiguration(
       appId: 'app-id',
       apiPathMode: SharedCoreApiPathMode.bundleDerived,
     );
 
     expect(builtInPaths.apiPathMode, SharedCoreApiPathMode.builtIn);
-    expect(customPaths.apiPathMode, SharedCoreApiPathMode.custom);
     expect(bundleDerivedPaths.apiPathMode, SharedCoreApiPathMode.bundleDerived);
-    expect(builtInPaths, isNot(customPaths));
-    expect(customPaths, isNot(bundleDerivedPaths));
+    expect(builtInPaths, isNot(bundleDerivedPaths));
   });
 
   test(

@@ -1856,21 +1856,20 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
   BridgeConfiguration dco_decode_bridge_configuration(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 12)
-      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return BridgeConfiguration(
       baseUrl: dco_decode_String(arr[0]),
       appId: dco_decode_String(arr[1]),
       signSecret: dco_decode_opt_String(arr[2]),
-      endpointPaths: dco_decode_list_bridge_endpoint_path(arr[3]),
-      apiPathMode: dco_decode_bridge_api_path_mode(arr[4]),
-      runtimeBundleId: dco_decode_String(arr[5]),
-      testServerMode: dco_decode_bool(arr[6]),
-      requestTimeoutMillis: dco_decode_CastedPrimitive_u_64(arr[7]),
-      jsonNoisePrefix: dco_decode_String(arr[8]),
-      jsonNoiseFieldCount: dco_decode_CastedPrimitive_u_64(arr[9]),
-      device: dco_decode_bridge_device_info(arr[10]),
-      http: dco_decode_bridge_http_configuration(arr[11]),
+      apiPathMode: dco_decode_bridge_api_path_mode(arr[3]),
+      runtimeBundleId: dco_decode_String(arr[4]),
+      testServerMode: dco_decode_bool(arr[5]),
+      requestTimeoutMillis: dco_decode_CastedPrimitive_u_64(arr[6]),
+      jsonNoisePrefix: dco_decode_String(arr[7]),
+      jsonNoiseFieldCount: dco_decode_CastedPrimitive_u_64(arr[8]),
+      device: dco_decode_bridge_device_info(arr[9]),
+      http: dco_decode_bridge_http_configuration(arr[10]),
     );
   }
 
@@ -1897,24 +1896,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
       networkOperator: dco_decode_String(arr[13]),
       simOperator: dco_decode_String(arr[14]),
       installReferrer: dco_decode_String(arr[15]),
-    );
-  }
-
-  @protected
-  BridgeEndpoint dco_decode_bridge_endpoint(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return BridgeEndpoint.values[raw as int];
-  }
-
-  @protected
-  BridgeEndpointPath dco_decode_bridge_endpoint_path(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return BridgeEndpointPath(
-      endpoint: dco_decode_bridge_endpoint(arr[0]),
-      path: dco_decode_String(arr[1]),
     );
   }
 
@@ -2034,12 +2015,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
   List<String> dco_decode_list_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_String).toList();
-  }
-
-  @protected
-  List<BridgeEndpointPath> dco_decode_list_bridge_endpoint_path(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_bridge_endpoint_path).toList();
   }
 
   @protected
@@ -2229,7 +2204,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
     var var_baseUrl = sse_decode_String(deserializer);
     var var_appId = sse_decode_String(deserializer);
     var var_signSecret = sse_decode_opt_String(deserializer);
-    var var_endpointPaths = sse_decode_list_bridge_endpoint_path(deserializer);
     var var_apiPathMode = sse_decode_bridge_api_path_mode(deserializer);
     var var_runtimeBundleId = sse_decode_String(deserializer);
     var var_testServerMode = sse_decode_bool(deserializer);
@@ -2244,7 +2218,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
       baseUrl: var_baseUrl,
       appId: var_appId,
       signSecret: var_signSecret,
-      endpointPaths: var_endpointPaths,
       apiPathMode: var_apiPathMode,
       runtimeBundleId: var_runtimeBundleId,
       testServerMode: var_testServerMode,
@@ -2293,23 +2266,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
       simOperator: var_simOperator,
       installReferrer: var_installReferrer,
     );
-  }
-
-  @protected
-  BridgeEndpoint sse_decode_bridge_endpoint(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner = sse_decode_i_32(deserializer);
-    return BridgeEndpoint.values[inner];
-  }
-
-  @protected
-  BridgeEndpointPath sse_decode_bridge_endpoint_path(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_endpoint = sse_decode_bridge_endpoint(deserializer);
-    var var_path = sse_decode_String(deserializer);
-    return BridgeEndpointPath(endpoint: var_endpoint, path: var_path);
   }
 
   @protected
@@ -2460,20 +2416,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
     var ans_ = <String>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_String(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
-  List<BridgeEndpointPath> sse_decode_list_bridge_endpoint_path(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <BridgeEndpointPath>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_bridge_endpoint_path(deserializer));
     }
     return ans_;
   }
@@ -2690,7 +2632,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
     sse_encode_String(self.baseUrl, serializer);
     sse_encode_String(self.appId, serializer);
     sse_encode_opt_String(self.signSecret, serializer);
-    sse_encode_list_bridge_endpoint_path(self.endpointPaths, serializer);
     sse_encode_bridge_api_path_mode(self.apiPathMode, serializer);
     sse_encode_String(self.runtimeBundleId, serializer);
     sse_encode_bool(self.testServerMode, serializer);
@@ -2723,25 +2664,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
     sse_encode_String(self.networkOperator, serializer);
     sse_encode_String(self.simOperator, serializer);
     sse_encode_String(self.installReferrer, serializer);
-  }
-
-  @protected
-  void sse_encode_bridge_endpoint(
-    BridgeEndpoint self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.index, serializer);
-  }
-
-  @protected
-  void sse_encode_bridge_endpoint_path(
-    BridgeEndpointPath self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_bridge_endpoint(self.endpoint, serializer);
-    sse_encode_String(self.path, serializer);
   }
 
   @protected
@@ -2848,18 +2770,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_String(item, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_list_bridge_endpoint_path(
-    List<BridgeEndpointPath> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_bridge_endpoint_path(item, serializer);
     }
   }
 

@@ -7,7 +7,7 @@ import 'frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `bridge_invalid_argument`, `to_json`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`
 
 /// Version of the linked `SharedCore` Rust implementation.
 Future<String> coreVersion() =>
@@ -120,14 +120,13 @@ abstract class RustSharedCoreClient implements RustOpaqueInterface {
 }
 
 /// Endpoint path resolution modes exposed through the Flutter bridge.
-enum BridgeApiPathMode { builtIn, custom, bundleDerived }
+enum BridgeApiPathMode { builtIn, bundleDerived }
 
 /// Complete configuration used to create an opaque Rust client.
 class BridgeConfiguration {
   final String baseUrl;
   final String appId;
   final String? signSecret;
-  final List<BridgeEndpointPath> endpointPaths;
   final BridgeApiPathMode apiPathMode;
   final String runtimeBundleId;
   final bool testServerMode;
@@ -141,7 +140,6 @@ class BridgeConfiguration {
     required this.baseUrl,
     required this.appId,
     this.signSecret,
-    required this.endpointPaths,
     required this.apiPathMode,
     required this.runtimeBundleId,
     required this.testServerMode,
@@ -157,7 +155,6 @@ class BridgeConfiguration {
       baseUrl.hashCode ^
       appId.hashCode ^
       signSecret.hashCode ^
-      endpointPaths.hashCode ^
       apiPathMode.hashCode ^
       runtimeBundleId.hashCode ^
       testServerMode.hashCode ^
@@ -175,7 +172,6 @@ class BridgeConfiguration {
           baseUrl == other.baseUrl &&
           appId == other.appId &&
           signSecret == other.signSecret &&
-          endpointPaths == other.endpointPaths &&
           apiPathMode == other.apiPathMode &&
           runtimeBundleId == other.runtimeBundleId &&
           testServerMode == other.testServerMode &&
@@ -267,50 +263,6 @@ class BridgeDeviceInfo {
           networkOperator == other.networkOperator &&
           simOperator == other.simOperator &&
           installReferrer == other.installReferrer;
-}
-
-/// Stable endpoint identifiers accepted by the bridge configuration.
-enum BridgeEndpoint {
-  saveDevice,
-  homeData,
-  videoTaskHistory,
-  imageTaskHistory,
-  videoList,
-  getTaskInfo,
-  videoDelete,
-  submitVideo,
-  upload,
-  sensitiveWords,
-  submitWaveSpeed,
-  getVideoListByIds,
-  rechargePurchaseListV2,
-  applePurchase,
-  subscribeApple,
-  googlePurchase,
-  subscribeGoogle,
-  bindEmail,
-  login,
-  uploadUserDeviceIdentifiers,
-  exchangeCode,
-}
-
-/// One endpoint override. A list is used instead of a map to keep the FFI schema portable.
-class BridgeEndpointPath {
-  final BridgeEndpoint endpoint;
-  final String path;
-
-  const BridgeEndpointPath({required this.endpoint, required this.path});
-
-  @override
-  int get hashCode => endpoint.hashCode ^ path.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is BridgeEndpointPath &&
-          runtimeType == other.runtimeType &&
-          endpoint == other.endpoint &&
-          path == other.path;
 }
 
 /// Error transported through FRB without exposing Rust implementation types.

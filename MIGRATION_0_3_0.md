@@ -70,21 +70,21 @@ final client = await SharedCore.configure(
 
 如果旧项目依赖插件默认签名密钥，升级时使用 `signSecret: null` 或直接省略该参数。
 
-### Endpoint 路径策略
+### API 路径策略
 
 0.3.0 使用 `apiPathMode` 明确选择路径来源：
 
-- `SharedCoreApiPathMode.builtIn`：默认值，使用内置真实路径，忽略 `endpointPaths`。
-- `SharedCoreApiPathMode.custom`：使用调用方提供的映射；必须提供全部 21 个 Endpoint。
+- `SharedCoreApiPathMode.builtIn`：默认值，使用插件保护的内置路径。
 - `SharedCoreApiPathMode.bundleDerived`：根据运行时 Android 包名或 iOS Bundle ID 派生混淆路径。
 
-旧项目如果只覆盖了少量 Endpoint，不能直接切换到 `custom`。应删除该映射并使用 `builtIn`，或者补齐全部 21 项。
+`SharedCoreEndpoint`、`endpointPaths` 和 `SharedCoreApiPathMode.custom` 已删除。
+旧项目必须删除路径映射，并在 `builtIn` 与 `bundleDerived` 之间选择。
 
-`testServerMode: true` 的优先级最高：它会直接使用内置测试服地址和未混淆的真实路径，忽略生产环境的 `baseUrl`、`apiPathMode` 和自定义路径映射。
+`testServerMode: true` 的优先级最高：它会使用受保护的内置测试服地址和内置路径，忽略生产环境的 `baseUrl` 与 `apiPathMode`。
 
 ### JSON noise
 
-在 `builtIn` 和 `custom` 模式下，`jsonNoisePrefix` 与 `jsonNoiseFieldCount` 仍按调用方传值工作。
+在 `builtIn` 模式下，`jsonNoisePrefix` 与 `jsonNoiseFieldCount` 仍按调用方传值工作。
 
 在 `bundleDerived` 模式下，这两个配置会被忽略：插件根据 Bundle ID/包名派生 `_xxxxxxxx_` 格式的前缀，并固定处理 20 个 noise 字段。
 
@@ -127,7 +127,7 @@ await client.setSession(accessToken: savedAccessToken);
 - iOS 继续使用原插件的 `NSUserDefaults` 键；默认 `sessionStorageKeyPrefix: 'SharedCore'` 时可以直接恢复旧 Session。
 - Android 0.3.0 改为插件私有 `SharedPreferences` 自动持久化。旧版本的 token 如果保存在 App 自己的任意位置，需要在升级后的第一次启动调用一次 `setSession(accessToken: oldToken)`。
 - 此后 `configure` 会自动恢复 Session，登录、绑定、刷新和退出也会自动保存或清理 Session。
-- `migrateUserSession` 和 `SharedCoreEndpoint.userMigration` 已彻底删除，没有替代 API。
+- `migrateUserSession` 已彻底删除，没有替代 API。
 
 ## 4. 方法迁移
 
@@ -214,25 +214,10 @@ try {
 - `httpStatus` 只有在能取得 HTTP 状态码时才非空。
 - 没有后端业务包裹的 HTTP 失败归类为 `SharedCoreLocalError.http`。
 
-## 8. Endpoint 枚举迁移
+## 8. Endpoint 配置删除
 
-0.3.0 的枚举名与真实 API 路径一致，只省略开头的 `/`：
-
-| 0.2.1（已删除） | 0.3.0 | 实际路径 |
-|---|---|---|
-| `userMigration` | 无 | `/userMigration` 已移除 |
-| `homeData` | `homeDataNew` | `/homeDataNew` |
-| `videoHistory` | `videoTaskHistory` | `/videoTaskHistory` |
-| `imageHistory` | `userAlbum` | `/userAlbum` |
-| `videoTemplates` | `videoList` | `/videoList` |
-| `deleteHistory` | `videoDel` | `/videoDel` |
-| `submitBodyEnhance` | `submitWaveSpeed` | `/submitWaveSpeed` |
-| `purchaseOptions` | `rechargePurchaseListV2` | `/rechargePurchaseListV2` |
-| `appleSubscription` | `subscribeApple` | `/subscribeApple` |
-| `googleSubscription` | `subscribeGoogle` | `/subscribeGoogle` |
-| `uploadUserDeviceIdentifiers` | `updateUserData` | `/updateUserData` |
-
-其他 Endpoint 名称没有变化。`custom` 模式下仍需使用 0.3.0 的全部 21 个枚举成员提供完整映射。
+公开 Endpoint 枚举、自定义路径映射和 custom 模式均已删除。业务调用方法不变；
+调用方只需删除旧配置，不需要提供替代路径。
 
 ## 9. 数据模型变化
 
@@ -270,7 +255,7 @@ Android 所需的微信/QQ package visibility queries 已由插件声明。
 
 - [ ] 删除 `SharedCoreDeviceConfiguration`，只在必要时使用 `deviceOverrides`。
 - [ ] 明确 `signSecret: null` 的语义。
-- [ ] 删除不完整的 `endpointPaths`，或切换到 `custom` 并补齐全部 21 项。
+- [ ] 删除 `SharedCoreEndpoint`、`endpointPaths` 和 `SharedCoreApiPathMode.custom` 的使用。
 - [ ] 将旧 Session 恢复代码改为只传 `accessToken`。
 - [ ] Android 在首次升级启动时导入 App 原来保存的 token。
 - [ ] 替换已改名或已删除的方法。

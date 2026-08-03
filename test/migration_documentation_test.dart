@@ -3,27 +3,13 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('0.3.0 migration guide covers every renamed endpoint', () {
+  test('0.3.0 migration guide covers endpoint configuration removal', () {
     final migration = File('MIGRATION_0_3_0.md').readAsStringSync();
-    const renamedEndpoints = <String, String>{
-      'homeData': 'homeDataNew',
-      'videoHistory': 'videoTaskHistory',
-      'imageHistory': 'userAlbum',
-      'videoTemplates': 'videoList',
-      'deleteHistory': 'videoDel',
-      'submitBodyEnhance': 'submitWaveSpeed',
-      'purchaseOptions': 'rechargePurchaseListV2',
-      'appleSubscription': 'subscribeApple',
-      'googleSubscription': 'subscribeGoogle',
-      'uploadUserDeviceIdentifiers': 'updateUserData',
-    };
 
-    for (final entry in renamedEndpoints.entries) {
-      expect(migration, contains('`${entry.key}`'));
-      expect(migration, contains('`${entry.value}`'));
-    }
-    expect(migration, contains('`userMigration`'));
-    expect(migration, contains('`/userMigration` 已移除'));
+    expect(migration, contains('`SharedCoreEndpoint`'));
+    expect(migration, contains('`endpointPaths`'));
+    expect(migration, contains('`SharedCoreApiPathMode.custom`'));
+    expect(migration, contains('均已删除'));
   });
 
   test('cookbook and migration guide cover the breaking API contracts', () {

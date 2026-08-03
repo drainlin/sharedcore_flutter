@@ -87,12 +87,6 @@ abstract class SharedCoreRustLibApiImplPlatform
   BridgeDeviceInfo dco_decode_bridge_device_info(dynamic raw);
 
   @protected
-  BridgeEndpoint dco_decode_bridge_endpoint(dynamic raw);
-
-  @protected
-  BridgeEndpointPath dco_decode_bridge_endpoint_path(dynamic raw);
-
-  @protected
   BridgeError dco_decode_bridge_error(dynamic raw);
 
   @protected
@@ -121,9 +115,6 @@ abstract class SharedCoreRustLibApiImplPlatform
 
   @protected
   List<String> dco_decode_list_String(dynamic raw);
-
-  @protected
-  List<BridgeEndpointPath> dco_decode_list_bridge_endpoint_path(dynamic raw);
 
   @protected
   List<int> dco_decode_list_prim_i_32_loose(dynamic raw);
@@ -229,14 +220,6 @@ abstract class SharedCoreRustLibApiImplPlatform
   BridgeDeviceInfo sse_decode_bridge_device_info(SseDeserializer deserializer);
 
   @protected
-  BridgeEndpoint sse_decode_bridge_endpoint(SseDeserializer deserializer);
-
-  @protected
-  BridgeEndpointPath sse_decode_bridge_endpoint_path(
-    SseDeserializer deserializer,
-  );
-
-  @protected
   BridgeError sse_decode_bridge_error(SseDeserializer deserializer);
 
   @protected
@@ -275,11 +258,6 @@ abstract class SharedCoreRustLibApiImplPlatform
 
   @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
-
-  @protected
-  List<BridgeEndpointPath> sse_decode_list_bridge_endpoint_path(
-    SseDeserializer deserializer,
-  );
 
   @protected
   List<int> sse_decode_list_prim_i_32_loose(SseDeserializer deserializer);
@@ -399,18 +377,6 @@ abstract class SharedCoreRustLibApiImplPlatform
   );
 
   @protected
-  void sse_encode_bridge_endpoint(
-    BridgeEndpoint self,
-    SseSerializer serializer,
-  );
-
-  @protected
-  void sse_encode_bridge_endpoint_path(
-    BridgeEndpointPath self,
-    SseSerializer serializer,
-  );
-
-  @protected
   void sse_encode_bridge_error(BridgeError self, SseSerializer serializer);
 
   @protected
@@ -457,12 +423,6 @@ abstract class SharedCoreRustLibApiImplPlatform
 
   @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_list_bridge_endpoint_path(
-    List<BridgeEndpointPath> self,
-    SseSerializer serializer,
-  );
 
   @protected
   void sse_encode_list_prim_i_32_loose(

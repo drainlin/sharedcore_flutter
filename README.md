@@ -50,21 +50,16 @@ overrides, such as `installReferrer`.
 
 The 0.3.0 API is intentionally breaking: compatibility aliases and duplicate
 parameter shapes were removed so every operation has one public spelling.
-
-Endpoint enum values now match the real API path name without the leading
-slash. For example, use `SharedCoreEndpoint.homeDataNew` for `/homeDataNew` and
-`SharedCoreEndpoint.userAlbum` for `/userAlbum`. The old business-oriented
-endpoint names have been removed and must be replaced during the 0.3.0 upgrade.
+Endpoint paths are entirely plugin-owned: callers cannot enumerate or override
+them.
 
 ### Endpoint path strategy
 
 `SharedCoreConfiguration.apiPathMode` selects the production endpoint path
 source:
 
-- `SharedCoreApiPathMode.builtIn` (default): use the built-in real API paths and
-  ignore `endpointPaths`.
-- `SharedCoreApiPathMode.custom`: use only caller-supplied `endpointPaths`; all
-  21 paths are required and validated during configuration.
+- `SharedCoreApiPathMode.builtIn` (default): use protected paths bundled with
+  the native core.
 - `SharedCoreApiPathMode.bundleDerived`: derive deterministic endpoint paths in
   Rust from the runtime Android
   package name or iOS bundle identifier. The plugin collects this identifier
@@ -81,18 +76,18 @@ exactly three `/` separators and no leading or trailing slash. The backend must
 implement the same algorithm. This is path obfuscation, not authentication or
 secret-key encryption.
 
-In obfuscated mode, the JSON noise prefix uses the same salt, SHA-256 function,
+In bundle-derived mode, the JSON noise prefix uses the same salt, SHA-256 function,
 Bundle ID normalization, and four-byte big-endian length encoding. The final
 length-prefixed input is the opaque 16-byte value
 `47c2916ea538db0f74b925e38a51fc60` instead of an endpoint name. Take the first
 eight lowercase hexadecimal characters of the digest and wrap them with `_`;
 for example, `com.example.app` produces `_bb316d91_`. Noise field names are
-that prefix followed by an integer from 0 through 19. In `builtIn` or `custom`
-mode, the caller-supplied JSON noise prefix and count are used unchanged.
+that prefix followed by an integer from 0 through 19. In `builtIn` mode, the
+caller-supplied JSON noise prefix and count are used unchanged.
 
 `testServerMode: true` has higher priority than `apiPathMode`: it always uses
-the Rust core's built-in test server address and real, unobfuscated endpoint
-paths. It does not require a custom path map or a runtime Bundle ID.
+the protected built-in test server address and built-in endpoint paths. It does
+not require a runtime Bundle ID.
 
 ### iOS WeChat/QQ detection
 

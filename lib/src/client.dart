@@ -673,14 +673,6 @@ bridge.BridgeConfiguration _configurationToBridge(
   baseUrl: value.baseUrl,
   appId: value.appId,
   signSecret: value.signSecret,
-  endpointPaths: value.endpointPaths.entries
-      .map(
-        (entry) => bridge.BridgeEndpointPath(
-          endpoint: _endpointToBridge(entry.key),
-          path: entry.value,
-        ),
-      )
-      .toList(growable: false),
   apiPathMode: _apiPathModeToBridge(value.apiPathMode),
   runtimeBundleId: deviceInfo.bundleId,
   testServerMode: value.testServerMode,
@@ -700,39 +692,9 @@ bridge.BridgeConfiguration _configurationToBridge(
 bridge.BridgeApiPathMode _apiPathModeToBridge(SharedCoreApiPathMode mode) =>
     switch (mode) {
       SharedCoreApiPathMode.builtIn => bridge.BridgeApiPathMode.builtIn,
-      SharedCoreApiPathMode.custom => bridge.BridgeApiPathMode.custom,
       SharedCoreApiPathMode.bundleDerived =>
         bridge.BridgeApiPathMode.bundleDerived,
     };
-
-bridge.BridgeEndpoint _endpointToBridge(
-  SharedCoreEndpoint endpoint,
-) => switch (endpoint) {
-  SharedCoreEndpoint.saveDevice => bridge.BridgeEndpoint.saveDevice,
-  SharedCoreEndpoint.homeDataNew => bridge.BridgeEndpoint.homeData,
-  SharedCoreEndpoint.videoTaskHistory => bridge.BridgeEndpoint.videoTaskHistory,
-  SharedCoreEndpoint.userAlbum => bridge.BridgeEndpoint.imageTaskHistory,
-  SharedCoreEndpoint.videoList => bridge.BridgeEndpoint.videoList,
-  SharedCoreEndpoint.getTaskInfo => bridge.BridgeEndpoint.getTaskInfo,
-  SharedCoreEndpoint.videoDel => bridge.BridgeEndpoint.videoDelete,
-  SharedCoreEndpoint.submitVideo => bridge.BridgeEndpoint.submitVideo,
-  SharedCoreEndpoint.upload => bridge.BridgeEndpoint.upload,
-  SharedCoreEndpoint.sensitiveWords => bridge.BridgeEndpoint.sensitiveWords,
-  SharedCoreEndpoint.submitWaveSpeed => bridge.BridgeEndpoint.submitWaveSpeed,
-  SharedCoreEndpoint.getVideoListByIds =>
-    bridge.BridgeEndpoint.getVideoListByIds,
-  SharedCoreEndpoint.rechargePurchaseListV2 =>
-    bridge.BridgeEndpoint.rechargePurchaseListV2,
-  SharedCoreEndpoint.applePurchase => bridge.BridgeEndpoint.applePurchase,
-  SharedCoreEndpoint.subscribeApple => bridge.BridgeEndpoint.subscribeApple,
-  SharedCoreEndpoint.googlePurchase => bridge.BridgeEndpoint.googlePurchase,
-  SharedCoreEndpoint.subscribeGoogle => bridge.BridgeEndpoint.subscribeGoogle,
-  SharedCoreEndpoint.bindEmail => bridge.BridgeEndpoint.bindEmail,
-  SharedCoreEndpoint.login => bridge.BridgeEndpoint.login,
-  SharedCoreEndpoint.updateUserData =>
-    bridge.BridgeEndpoint.uploadUserDeviceIdentifiers,
-  SharedCoreEndpoint.exchangeCode => bridge.BridgeEndpoint.exchangeCode,
-};
 
 bridge.BridgeDeviceInfo _deviceToBridge(SharedCoreDeviceInfo value) =>
     bridge.BridgeDeviceInfo(

@@ -23,7 +23,7 @@ checklist.
   namespace for upgrade continuity.
 - Added automatic Android session persistence in plugin-owned private
   `SharedPreferences`. Existing app-owned Android tokens must be imported once.
-- Removed `migrateUserSession` and `SharedCoreEndpoint.userMigration`.
+- Removed `migrateUserSession`.
 
 ### Public API changes
 
@@ -41,22 +41,24 @@ checklist.
 - Replaced duplicate numeric/string error fields with `backendCode` for backend
   failures and `SharedCoreLocalError` for SDK/device failures. `httpStatus` is
   nullable; `businessReason`, `retryable`, and `underlying*` were removed.
+- Removed the public `SharedCoreEndpoint` enum and `endpointPaths`; callers can
+  no longer enumerate or override backend routes.
 
 ### Configuration and endpoints
 
 - Made `signSecret` nullable. `null` selects the protected Rust-embedded
   default; non-null values are used exactly as supplied.
-- Added the explicit `apiPathMode` strategies `builtIn`, `custom`, and
-  `bundleDerived`. Custom mode validates all 21 endpoint paths.
+- Limited `apiPathMode` to `builtIn` and `bundleDerived`; the former `custom`
+  mode and caller-supplied endpoint mappings were removed.
 - Made `testServerMode` always select the built-in test server address and real,
   unobfuscated endpoint paths.
+- Encoded the test-server URL and built-in paths at build time and added a
+  release-binary scan that rejects plaintext route leakage.
 - Made bundle-derived mode derive its endpoint paths and `_xxxxxxxx_` JSON noise
   prefix from the runtime Bundle ID/package name, with exactly 20 noise fields.
 - Replaced `proxyHost` and `proxyPort` with
   `SharedCoreHttpConfiguration.proxyUrl`; connection, read-idle, and overall
   request timeouts default to 60 seconds.
-- Renamed endpoint enum members to match their actual API path names and removed
-  `/userMigration`.
 
 ### Model and platform changes
 

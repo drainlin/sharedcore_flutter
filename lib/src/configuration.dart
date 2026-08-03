@@ -1,79 +1,7 @@
-/// Backend endpoint keys supported by SharedCore.
-///
-/// Enum value names intentionally match the API path name without its leading
-/// slash. For example, [homeDataNew] represents `/homeDataNew`.
-enum SharedCoreEndpoint {
-  /// `/saveDevice`.
-  saveDevice,
-
-  /// `/homeDataNew`.
-  homeDataNew,
-
-  /// `/videoTaskHistory`.
-  videoTaskHistory,
-
-  /// `/userAlbum`.
-  userAlbum,
-
-  /// `/videoList`.
-  videoList,
-
-  /// `/getTaskInfo`.
-  getTaskInfo,
-
-  /// `/videoDel`.
-  videoDel,
-
-  /// `/submitVideo`.
-  submitVideo,
-
-  /// `/upload`.
-  upload,
-
-  /// `/sensitiveWords`.
-  sensitiveWords,
-
-  /// `/submitWaveSpeed`.
-  submitWaveSpeed,
-
-  /// `/getVideoListByIds`.
-  getVideoListByIds,
-
-  /// `/rechargePurchaseListV2`.
-  rechargePurchaseListV2,
-
-  /// `/applePurchase`.
-  applePurchase,
-
-  /// `/subscribeApple`.
-  subscribeApple,
-
-  /// `/googlePurchase`.
-  googlePurchase,
-
-  /// `/subscribeGoogle`.
-  subscribeGoogle,
-
-  /// `/bindEmail`.
-  bindEmail,
-
-  /// `/login`.
-  login,
-
-  /// `/updateUserData`.
-  updateUserData,
-
-  /// `/exchangeCode`.
-  exchangeCode,
-}
-
 /// Selects how production API endpoint paths are resolved.
 enum SharedCoreApiPathMode {
   /// Uses the real API endpoint paths built into the plugin.
   builtIn,
-
-  /// Uses a complete caller-provided [SharedCoreConfiguration.endpointPaths].
-  custom,
 
   /// Derives bundle-specific endpoint paths and JSON noise settings in Rust.
   bundleDerived,
@@ -306,7 +234,6 @@ class SharedCoreConfiguration {
     this.deviceOverrides = const SharedCoreDeviceOverrides(),
     this.signSecret,
     this.sessionStorageKeyPrefix = 'SharedCore',
-    this.endpointPaths = const <SharedCoreEndpoint, String>{},
     this.apiPathMode = SharedCoreApiPathMode.builtIn,
     this.testServerMode = false,
     this.requestTimeout = const Duration(seconds: 60),
@@ -332,13 +259,9 @@ class SharedCoreConfiguration {
   /// On iOS, the default preserves the original plugin's UserDefaults keys.
   final String sessionStorageKeyPrefix;
 
-  /// Optional endpoint path overrides.
-  final Map<SharedCoreEndpoint, String> endpointPaths;
-
   /// Selects the production API path strategy.
   ///
-  /// Custom mode requires all endpoint paths at configuration time. Bundle-
-  /// derived mode also derives the JSON noise prefix and fixes its count at 20.
+  /// Bundle-derived mode also derives the JSON noise prefix and fixes its count at 20.
   /// [testServerMode] overrides this value and always uses built-in real paths.
   final SharedCoreApiPathMode apiPathMode;
 
@@ -374,7 +297,6 @@ class SharedCoreConfiguration {
           deviceOverrides == other.deviceOverrides &&
           signSecret == other.signSecret &&
           sessionStorageKeyPrefix == other.sessionStorageKeyPrefix &&
-          _endpointMapsEqual(endpointPaths, other.endpointPaths) &&
           apiPathMode == other.apiPathMode &&
           testServerMode == other.testServerMode &&
           requestTimeout == other.requestTimeout &&
@@ -389,7 +311,6 @@ class SharedCoreConfiguration {
     deviceOverrides,
     signSecret,
     sessionStorageKeyPrefix,
-    ..._sortedEndpointHashes(endpointPaths),
     apiPathMode,
     testServerMode,
     requestTimeout,
@@ -526,22 +447,4 @@ enum SharedCoreImageStyle {
 
   /// Numeric style identifier sent to the backend.
   final int id;
-}
-
-bool _endpointMapsEqual(
-  Map<SharedCoreEndpoint, String> left,
-  Map<SharedCoreEndpoint, String> right,
-) {
-  if (identical(left, right)) return true;
-  if (left.length != right.length) return false;
-  for (final entry in left.entries) {
-    if (right[entry.key] != entry.value) return false;
-  }
-  return true;
-}
-
-Iterable<int> _sortedEndpointHashes(Map<SharedCoreEndpoint, String> paths) {
-  final entries = paths.entries.toList()
-    ..sort((left, right) => left.key.index.compareTo(right.key.index));
-  return entries.map((entry) => Object.hash(entry.key, entry.value));
 }
