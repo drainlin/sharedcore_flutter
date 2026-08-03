@@ -363,9 +363,13 @@ class SharedCoreClient {
   Future<SharedCoreGenerationSubmission> submitVideoTask(
     SharedCoreSubmitVideoOptions options,
   ) async {
-    if (_isBlank(options.imagePath) &&
-        options.videoExtend <= 0 &&
-        options.oldTaskId <= 0) {
+    if (options.extendId < 0) {
+      throw const SharedCoreException(
+        localError: SharedCoreLocalError.invalidArgument,
+        message: 'Video extension requires a positive extend ID',
+      );
+    }
+    if (_isBlank(options.imagePath) && options.extendId == 0) {
       throw const SharedCoreException(
         localError: SharedCoreLocalError.invalidArgument,
         message: 'Image path is empty',
@@ -374,6 +378,43 @@ class SharedCoreClient {
     return _mappedPersisting(
       () => _inner.submitVideoTask(options: _videoOptionsToBridge(options)),
       SharedCoreGenerationSubmission.fromMap,
+    );
+  }
+
+  /// Extends an existing video using its backend task identifier.
+  Future<SharedCoreGenerationSubmission> extendVideoTask({
+    required SharedCoreHistoryItem source,
+    String prompt = '',
+    int definition = 0,
+    int duration = 0,
+    int variation = 0,
+  }) {
+    if (source.type != 'video') {
+      throw const SharedCoreException(
+        localError: SharedCoreLocalError.invalidArgument,
+        message: 'Only video history items can be extended',
+      );
+    }
+    if (source.canExtend == false) {
+      throw const SharedCoreException(
+        localError: SharedCoreLocalError.invalidArgument,
+        message: 'The selected video cannot be extended',
+      );
+    }
+    if (source.extendId <= 0) {
+      throw const SharedCoreException(
+        localError: SharedCoreLocalError.invalidArgument,
+        message: 'The selected video does not contain a valid extend ID',
+      );
+    }
+    return submitVideoTask(
+      SharedCoreSubmitVideoOptions(
+        prompt: prompt,
+        extendId: source.extendId,
+        definition: definition,
+        duration: duration,
+        variation: variation,
+      ),
     );
   }
 
@@ -776,8 +817,7 @@ bridge.BridgeSubmitVideoOptions _videoOptionsToBridge(
   imagePath: value.imagePath,
   prompt: value.prompt,
   templateId: value.templateId,
-  videoExtend: value.videoExtend,
-  oldTaskId: value.oldTaskId,
+  extendId: value.extendId,
   definition: value.definition,
   duration: value.duration,
   variation: value.variation,

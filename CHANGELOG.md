@@ -1,3 +1,10 @@
+## 0.3.1
+
+- Separated history `recordId` from `extendId` and added
+  `extendVideoTask`, which always submits that explicit extension source ID.
+- Simplified extension submissions to one positive `extendId`; the SDK maps it
+  to the backend extension fields internally.
+
 ## 0.3.0
 
 This release is intentionally incompatible with 0.2.1 and does not retain old

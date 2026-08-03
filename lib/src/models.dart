@@ -228,6 +228,7 @@ class SharedCoreHistoryItem {
   const SharedCoreHistoryItem({
     required this.type,
     required this.recordId,
+    this.extendId = 0,
     required this.title,
     required this.coveringUrl,
     required this.originUrl,
@@ -239,7 +240,13 @@ class SharedCoreHistoryItem {
   });
 
   final String type;
+
+  /// Backend history-record identifier used by deletion APIs.
   final int recordId;
+
+  /// Source task identifier used only when extending this video.
+  final int extendId;
+
   final String title;
   final String coveringUrl;
   final String originUrl;
@@ -253,6 +260,7 @@ class SharedCoreHistoryItem {
     return SharedCoreHistoryItem(
       type: _string(map['type']),
       recordId: _int(map['recordId']),
+      extendId: _int(map['extendId']),
       title: _string(map['title']),
       coveringUrl: _string(map['coveringUrl']),
       originUrl: _string(map['originUrl']),

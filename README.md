@@ -30,11 +30,22 @@ final client = await SharedCore.configure(
 await client.setSession(accessToken: 'token');
 final home = await SharedCore.instance.loadHomeContent();
 
+final videoHistory = await client.loadVideoHistoryItems();
+final source = videoHistory.firstWhere((item) => item.canExtend == true);
+final extension = await client.extendVideoTask(
+  source: source,
+  prompt: 'continue the scene',
+);
+
 final verification = await client.verifyPurchase(
   productId: storePurchase.productID,
   purchaseData: storePurchaseData,
 );
 ```
+
+History items expose two intentionally different identifiers: `recordId` is
+used by `deleteHistoryItems`, while `extendId` identifies the source task
+used by `extendVideoTask`. Do not pass `recordId` as `oldTaskId`.
 
 `verifyPurchase` detects iOS or Android automatically. On iOS, pass Apple
 receipt data as `purchaseData`; on Android, pass the Google Play purchase token.

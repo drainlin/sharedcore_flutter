@@ -79,6 +79,21 @@ Future<void> _compileAgainstSemanticClientSurface(
   await client.submitVideoTask(
     const SharedCoreSubmitVideoOptions(imagePath: '/tmp/image.jpg'),
   );
+  await client.extendVideoTask(
+    source: const SharedCoreHistoryItem(
+      type: 'video',
+      recordId: 2810,
+      extendId: 450080,
+      title: '',
+      coveringUrl: '',
+      originUrl: '',
+      reason: '',
+      stateCode: 30,
+      createdAt: 0,
+      styleId: 0,
+      canExtend: true,
+    ),
+  );
   await client.submitImageTaskFromImageUrl(
     imageUrl: 'https://image',
     style: SharedCoreImageStyle.chestModerate,

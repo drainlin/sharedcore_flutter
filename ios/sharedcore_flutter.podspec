@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'sharedcore_flutter'
-  s.version          = '0.3.0'
+  s.version          = '0.3.1'
   s.summary          = 'Binary Flutter bindings for SharedCore Rust.'
   s.description      = <<-DESC
 Binary Flutter bindings for SharedCore Rust.

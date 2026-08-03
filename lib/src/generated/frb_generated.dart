@@ -1991,17 +1991,16 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
   BridgeSubmitVideoOptions dco_decode_bridge_submit_video_options(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return BridgeSubmitVideoOptions(
       imagePath: dco_decode_String(arr[0]),
       prompt: dco_decode_String(arr[1]),
       templateId: dco_decode_i_32(arr[2]),
-      videoExtend: dco_decode_i_32(arr[3]),
-      oldTaskId: dco_decode_i_32(arr[4]),
-      definition: dco_decode_i_32(arr[5]),
-      duration: dco_decode_i_32(arr[6]),
-      variation: dco_decode_i_32(arr[7]),
+      extendId: dco_decode_i_32(arr[3]),
+      definition: dco_decode_i_32(arr[4]),
+      duration: dco_decode_i_32(arr[5]),
+      variation: dco_decode_i_32(arr[6]),
     );
   }
 
@@ -2385,8 +2384,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
     var var_imagePath = sse_decode_String(deserializer);
     var var_prompt = sse_decode_String(deserializer);
     var var_templateId = sse_decode_i_32(deserializer);
-    var var_videoExtend = sse_decode_i_32(deserializer);
-    var var_oldTaskId = sse_decode_i_32(deserializer);
+    var var_extendId = sse_decode_i_32(deserializer);
     var var_definition = sse_decode_i_32(deserializer);
     var var_duration = sse_decode_i_32(deserializer);
     var var_variation = sse_decode_i_32(deserializer);
@@ -2394,8 +2392,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
       imagePath: var_imagePath,
       prompt: var_prompt,
       templateId: var_templateId,
-      videoExtend: var_videoExtend,
-      oldTaskId: var_oldTaskId,
+      extendId: var_extendId,
       definition: var_definition,
       duration: var_duration,
       variation: var_variation,
@@ -2751,8 +2748,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
     sse_encode_String(self.imagePath, serializer);
     sse_encode_String(self.prompt, serializer);
     sse_encode_i_32(self.templateId, serializer);
-    sse_encode_i_32(self.videoExtend, serializer);
-    sse_encode_i_32(self.oldTaskId, serializer);
+    sse_encode_i_32(self.extendId, serializer);
     sse_encode_i_32(self.definition, serializer);
     sse_encode_i_32(self.duration, serializer);
     sse_encode_i_32(self.variation, serializer);

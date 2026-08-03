@@ -478,8 +478,7 @@ class BridgeSubmitVideoOptions {
   final String imagePath;
   final String prompt;
   final int templateId;
-  final int videoExtend;
-  final int oldTaskId;
+  final int extendId;
   final int definition;
   final int duration;
   final int variation;
@@ -488,8 +487,7 @@ class BridgeSubmitVideoOptions {
     required this.imagePath,
     required this.prompt,
     required this.templateId,
-    required this.videoExtend,
-    required this.oldTaskId,
+    required this.extendId,
     required this.definition,
     required this.duration,
     required this.variation,
@@ -503,8 +501,7 @@ class BridgeSubmitVideoOptions {
       imagePath.hashCode ^
       prompt.hashCode ^
       templateId.hashCode ^
-      videoExtend.hashCode ^
-      oldTaskId.hashCode ^
+      extendId.hashCode ^
       definition.hashCode ^
       duration.hashCode ^
       variation.hashCode;
@@ -517,8 +514,7 @@ class BridgeSubmitVideoOptions {
           imagePath == other.imagePath &&
           prompt == other.prompt &&
           templateId == other.templateId &&
-          videoExtend == other.videoExtend &&
-          oldTaskId == other.oldTaskId &&
+          extendId == other.extendId &&
           definition == other.definition &&
           duration == other.duration &&
           variation == other.variation;

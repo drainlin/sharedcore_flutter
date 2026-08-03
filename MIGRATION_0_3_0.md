@@ -138,6 +138,7 @@ await client.setSession(accessToken: savedAccessToken);
 | `deleteHistoryItemIds(ids)` | `deleteHistoryItems(ids)` | 仅名称调整 |
 | `uploadFileResult(path)` | `uploadFile(path)` | 返回值仍是 `SharedCoreUploadResult` |
 | `submitVideoTask(...)` | `submitVideoTask(SharedCoreSubmitVideoOptions(...))` | 视频参数统一到值对象 |
+| 手动将历史 ID 填入 `oldTaskId` | `extendVideoTask(source: historyItem)` | `recordId` 仅用于删除；延长固定使用独立的 `extendId` |
 | `submitWaveSpeedTask(styleId:, imageURL:)` | `submitImageTaskFromImageUrl(imageUrl:, style:)` | 明确为图生图；裸 `styleId` 改为 `SharedCoreImageStyle` |
 | `submitWaveSpeedTaskWithImagePath(styleId:, imagePath:)` | `submitImageTaskFromImagePath(imagePath:, style:)` | 插件内部先上传再提交图生图任务 |
 | 四个 Apple/Google 购买与订阅验证方法 | `verifyPurchase(productId:, purchaseData:)` | 自动判断平台和购买类型 |
@@ -145,6 +146,11 @@ await client.setSession(accessToken: savedAccessToken);
 | `migrateUserSession(...)` | 已删除 | 不再提供用户迁移接口 |
 
 分页参数也从可空值改为明确默认值：`page = 1`、`pageSize = 20`，并要求二者大于零。
+
+延长视频时不要把 `SharedCoreHistoryItem.recordId` 传给 `oldTaskId`。历史项现在同时提供
+`recordId`（删除记录）与 `extendId`（仅作为延长来源）；优先使用
+`extendVideoTask(source: historyItem)`，由插件安全组装 `videoExtend = 1` 和
+`oldTaskId = historyItem.extendId`。
 
 ## 5. 图生图风格
 

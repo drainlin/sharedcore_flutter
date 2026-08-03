@@ -37,6 +37,18 @@ void main() {
     expect(account.isPro, isTrue);
   });
 
+  test('history model keeps record and task identifiers separate', () {
+    final history = SharedCoreHistoryItem.fromMap(<String, Object?>{
+      'type': 'video',
+      'recordId': 2810,
+      'extendId': 450080,
+      'canExtend': true,
+    });
+
+    expect(history.recordId, 2810);
+    expect(history.extendId, 450080);
+  });
+
   test('exception exposes a local error without a backend code', () {
     const error = SharedCoreException(
       localError: SharedCoreLocalError.network,

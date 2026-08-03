@@ -385,8 +385,7 @@ class SharedCoreSubmitVideoOptions {
     this.imagePath = '',
     this.prompt = '',
     this.templateId = 0,
-    this.videoExtend = 0,
-    this.oldTaskId = 0,
+    this.extendId = 0,
     this.definition = 0,
     this.duration = 0,
     this.variation = 0,
@@ -401,11 +400,8 @@ class SharedCoreSubmitVideoOptions {
   /// Backend template identifier.
   final int templateId;
 
-  /// Existing task extension mode.
-  final int videoExtend;
-
-  /// Existing task identifier.
-  final int oldTaskId;
+  /// Source video identifier for extension; zero for a normal submission.
+  final int extendId;
 
   /// Requested output definition.
   final int definition;
