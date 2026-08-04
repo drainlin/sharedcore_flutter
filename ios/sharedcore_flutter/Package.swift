@@ -27,6 +27,9 @@ let package = Package(
             name: "sharedcore_flutter",
             dependencies: [
                 "sharedcore_flutter_linker"
+            ],
+            resources: [
+                .process("PrivacyInfo.xcprivacy")
             ]
         )
     ]

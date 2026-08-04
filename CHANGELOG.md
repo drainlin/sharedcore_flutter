@@ -1,5 +1,9 @@
 ## 0.3.2
 
+- Added the iOS privacy manifest for app-only `UserDefaults` and native file
+  metadata access, bundled through both CocoaPods and Swift Package Manager.
+- Stopped reading the active-keyboard list on iOS; `inputLanguage` now uses the
+  current locale language so keyboard-derived information is not sent off-device.
 - Changed the default `apiPathMode` to `bundleDerived`; `builtIn` now requires
   explicit selection.
 - Removed `bindEmail`; email login and registration now share `login`.

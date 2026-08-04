@@ -149,6 +149,12 @@ Keychain credential after a normal uninstall and reinstall. The default prefix
 is `SharedCore`; set `sessionStorageKeyPrefix` only when separate products need
 different session namespaces.
 
+The iOS plugin bundles a privacy manifest for its app-only `UserDefaults` use
+and native file metadata access through both CocoaPods and Swift Package
+Manager. It does not inspect the active-keyboard list; `inputLanguage` uses the
+current locale language. Host applications remain responsible for accurately
+declaring data transmitted to their backend in App Store privacy labels.
+
 ## Documentation
 
 Open [docs/cookbook.html](docs/cookbook.html) for the standalone Chinese

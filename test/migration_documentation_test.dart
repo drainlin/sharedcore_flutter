@@ -58,4 +58,33 @@ void main() {
     expect(configuration, isNot(contains('class SharedCoreSession')));
     expect(client, contains('Future<void> logout()'));
   });
+
+  test('iOS privacy manifest covers UserDefaults for CocoaPods and SPM', () {
+    const manifestPath =
+        'ios/sharedcore_flutter/Sources/sharedcore_flutter/'
+        'PrivacyInfo.xcprivacy';
+    final manifest = File(manifestPath).readAsStringSync();
+    final podspec = File('ios/sharedcore_flutter.podspec').readAsStringSync();
+    final package = File(
+      'ios/sharedcore_flutter/Package.swift',
+    ).readAsStringSync();
+    final cocoaPodsImplementation = File(
+      'ios/Classes/SharedcoreFlutterPlugin.swift',
+    ).readAsStringSync();
+    final spmImplementation = File(
+      'ios/sharedcore_flutter/Sources/sharedcore_flutter/'
+      'SharedcoreFlutter.swift',
+    ).readAsStringSync();
+
+    expect(manifest, contains('NSPrivacyAccessedAPICategoryUserDefaults'));
+    expect(manifest, contains('CA92.1'));
+    expect(manifest, contains('NSPrivacyAccessedAPICategoryFileTimestamp'));
+    expect(manifest, contains('C617.1'));
+    expect(manifest, contains('<key>NSPrivacyTracking</key>'));
+    expect(manifest, contains('<false/>'));
+    expect(podspec, contains(manifestPath.substring('ios/'.length)));
+    expect(package, contains('.process("PrivacyInfo.xcprivacy")'));
+    expect(cocoaPodsImplementation, isNot(contains('activeInputModes')));
+    expect(spmImplementation, isNot(contains('activeInputModes')));
+  });
 }

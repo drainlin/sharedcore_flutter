@@ -10,6 +10,7 @@ the private `shared_core_rust` repository and must never be copied here.
 - Android ARM64 shared library under `android/src/main/jniLibs/arm64-v8a/`
 - iOS ARM64 static libraries packaged as an XCFramework under
   `ios/sharedcore_flutter/Frameworks/`
+- An iOS privacy manifest bundled for CocoaPods and Swift Package Manager
 - Minimal Swift/header linkage glue under `ios/Classes/`
 
 ## Build from the private repository

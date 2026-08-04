@@ -72,7 +72,7 @@ public final class SharedcoreFlutterPlugin: NSObject, FlutterPlugin {
             "language": language,
             "templateLanguage": templateLanguage,
             "timezone": TimeZone.current.identifier,
-            "inputLanguage": UITextInputMode.activeInputModes.first?.primaryLanguage ?? "",
+            "inputLanguage": templateLanguage,
             "vpn": isVpnActive(),
             "hasWxOrQq": hasWxOrQq(),
             "networkOperator": carriers.network,
