@@ -170,5 +170,11 @@ The private bridge crate lives outside this package at
 `../shared_core_rust/frb_bridge`. Its `scripts/build_all.sh` regenerates glue
 and replaces the staged binary artifacts.
 
+Release builds use a fresh seed to encode selected internal protocol fields in
+addition to the existing protected built-in routes and signing material. The
+Android/iOS packaging checks reject binaries containing those exact plaintext
+values. This is static-analysis hardening, not a replacement for server-side
+authentication and authorization.
+
 See [BINARY_DISTRIBUTION.md](BINARY_DISTRIBUTION.md) for the release boundary
 and verification checklist.

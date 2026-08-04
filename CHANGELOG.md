@@ -1,4 +1,4 @@
-## Unreleased
+## 0.3.2
 
 - Changed the default `apiPathMode` to `bundleDerived`; `builtIn` now requires
   explicit selection.
@@ -17,6 +17,8 @@
 - Added caller-visible `isRetryable` and `isAuthenticationError` exception
   semantics plus distinct unauthorized, forbidden, not-found, and server
   local HTTP categories.
+- Hardened native release artifacts with per-build obfuscation for selected
+  internal protocol fields and expanded Android/iOS plaintext scans.
 
 ## 0.3.1
 
