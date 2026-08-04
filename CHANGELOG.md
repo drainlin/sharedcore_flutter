@@ -1,3 +1,23 @@
+## Unreleased
+
+- Changed the default `apiPathMode` to `bundleDerived`; `builtIn` now requires
+  explicit selection.
+- Removed `bindEmail`; email login and registration now share `login`.
+- Kept `updatePassword` as the only password-change API and moved its backend
+  request to `changePassword` without changing the request fields.
+- Made session credentials fully SDK-owned: removed the public token/session
+  accessors and injection/start/clear methods, added automatic bootstrap and
+  `logout`, and serialized credential persistence.
+- Moved credentials to iOS Keychain and Android Keystore-backed AES-GCM
+  storage, including plaintext migration, reinstall cleanup on iOS, and
+  redacted Rust Session diagnostics.
+- Hardened `saveDevice` recovery: rejected credentials are removed before an
+  anonymous fallback, missing Sessions self-heal on the next business call,
+  and transient refresh failures retain credentials.
+- Added caller-visible `isRetryable` and `isAuthenticationError` exception
+  semantics plus distinct unauthorized, forbidden, not-found, and server
+  local HTTP categories.
+
 ## 0.3.1
 
 - Separated history `recordId` from `extendId` and added

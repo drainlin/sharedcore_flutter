@@ -70,7 +70,7 @@ class SharedCoreRustLib
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 1596618835;
+  int get rustContentHash => 442985870;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -81,18 +81,9 @@ class SharedCoreRustLib
 }
 
 abstract class SharedCoreRustLibApi extends BaseApi {
-  Future<String> crateApiRustSharedCoreClientAccessToken({
+  Future<String> crateApiRustSharedCoreClientBootstrap({
     required RustSharedCoreClient that,
-  });
-
-  Future<String> crateApiRustSharedCoreClientBindEmail({
-    required RustSharedCoreClient that,
-    required String email,
-    required String password,
-  });
-
-  Future<void> crateApiRustSharedCoreClientClearSession({
-    required RustSharedCoreClient that,
+    String? accessToken,
   });
 
   Future<RustSharedCoreClient> crateApiRustSharedCoreClientCreate({
@@ -169,26 +160,21 @@ abstract class SharedCoreRustLibApi extends BaseApi {
     String? threeToken,
   });
 
+  Future<String> crateApiRustSharedCoreClientLogout({
+    required RustSharedCoreClient that,
+  });
+
   Future<String> crateApiRustSharedCoreClientRefreshAccount({
     required RustSharedCoreClient that,
   });
 
-  Future<BridgeSession> crateApiRustSharedCoreClientSession({
+  Future<BridgeSession> crateApiRustSharedCoreClientSessionForPersistence({
     required RustSharedCoreClient that,
   });
 
   Future<void> crateApiRustSharedCoreClientSetDevice({
     required RustSharedCoreClient that,
     required BridgeDeviceInfo device,
-  });
-
-  Future<void> crateApiRustSharedCoreClientSetSession({
-    required RustSharedCoreClient that,
-    required BridgeSession session,
-  });
-
-  Future<void> crateApiRustSharedCoreClientStartSession({
-    required RustSharedCoreClient that,
   });
 
   Future<String> crateApiRustSharedCoreClientSubmitVideoTask({
@@ -282,8 +268,9 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
   });
 
   @override
-  Future<String> crateApiRustSharedCoreClientAccessToken({
+  Future<String> crateApiRustSharedCoreClientBootstrap({
     required RustSharedCoreClient that,
+    String? accessToken,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -293,6 +280,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
             that,
             serializer,
           );
+          sse_encode_opt_String(accessToken, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -302,95 +290,19 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiRustSharedCoreClientAccessTokenConstMeta,
-        argValues: [that],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRustSharedCoreClientAccessTokenConstMeta =>
-      const TaskConstMeta(
-        debugName: "RustSharedCoreClient_access_token",
-        argNames: ["that"],
-      );
-
-  @override
-  Future<String> crateApiRustSharedCoreClientBindEmail({
-    required RustSharedCoreClient that,
-    required String email,
-    required String password,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustSharedCoreClient(
-            that,
-            serializer,
-          );
-          sse_encode_String(email, serializer);
-          sse_encode_String(password, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 2,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
           decodeErrorData: sse_decode_bridge_error,
         ),
-        constMeta: kCrateApiRustSharedCoreClientBindEmailConstMeta,
-        argValues: [that, email, password],
+        constMeta: kCrateApiRustSharedCoreClientBootstrapConstMeta,
+        argValues: [that, accessToken],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiRustSharedCoreClientBindEmailConstMeta =>
+  TaskConstMeta get kCrateApiRustSharedCoreClientBootstrapConstMeta =>
       const TaskConstMeta(
-        debugName: "RustSharedCoreClient_bind_email",
-        argNames: ["that", "email", "password"],
-      );
-
-  @override
-  Future<void> crateApiRustSharedCoreClientClearSession({
-    required RustSharedCoreClient that,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustSharedCoreClient(
-            that,
-            serializer,
-          );
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 3,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiRustSharedCoreClientClearSessionConstMeta,
-        argValues: [that],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRustSharedCoreClientClearSessionConstMeta =>
-      const TaskConstMeta(
-        debugName: "RustSharedCoreClient_clear_session",
-        argNames: ["that"],
+        debugName: "RustSharedCoreClient_bootstrap",
+        argNames: ["that", "accessToken"],
       );
 
   @override
@@ -408,7 +320,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 2,
             port: port_,
           );
         },
@@ -447,7 +359,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 3,
             port: port_,
           );
         },
@@ -483,7 +395,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 4,
             port: port_,
           );
         },
@@ -519,7 +431,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 5,
             port: port_,
           );
         },
@@ -557,7 +469,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 6,
             port: port_,
           );
         },
@@ -593,7 +505,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 7,
             port: port_,
           );
         },
@@ -631,7 +543,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 8,
             port: port_,
           );
         },
@@ -668,7 +580,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 9,
             port: port_,
           );
         },
@@ -708,7 +620,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 10,
             port: port_,
           );
         },
@@ -745,7 +657,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 11,
             port: port_,
           );
         },
@@ -781,7 +693,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 12,
             port: port_,
           );
         },
@@ -821,7 +733,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 13,
             port: port_,
           );
         },
@@ -860,7 +772,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 16,
+            funcId: 14,
             port: port_,
           );
         },
@@ -902,7 +814,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 17,
+            funcId: 15,
             port: port_,
           );
         },
@@ -945,7 +857,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 18,
+            funcId: 16,
             port: port_,
           );
         },
@@ -967,6 +879,42 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
       );
 
   @override
+  Future<String> crateApiRustSharedCoreClientLogout({
+    required RustSharedCoreClient that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustSharedCoreClient(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 17,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateApiRustSharedCoreClientLogoutConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiRustSharedCoreClientLogoutConstMeta =>
+      const TaskConstMeta(
+        debugName: "RustSharedCoreClient_logout",
+        argNames: ["that"],
+      );
+
+  @override
   Future<String> crateApiRustSharedCoreClientRefreshAccount({
     required RustSharedCoreClient that,
   }) {
@@ -981,7 +929,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 19,
+            funcId: 18,
             port: port_,
           );
         },
@@ -1003,7 +951,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
       );
 
   @override
-  Future<BridgeSession> crateApiRustSharedCoreClientSession({
+  Future<BridgeSession> crateApiRustSharedCoreClientSessionForPersistence({
     required RustSharedCoreClient that,
   }) {
     return handler.executeNormal(
@@ -1017,7 +965,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 20,
+            funcId: 19,
             port: port_,
           );
         },
@@ -1025,16 +973,17 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           decodeSuccessData: sse_decode_bridge_session,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiRustSharedCoreClientSessionConstMeta,
+        constMeta: kCrateApiRustSharedCoreClientSessionForPersistenceConstMeta,
         argValues: [that],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiRustSharedCoreClientSessionConstMeta =>
+  TaskConstMeta
+  get kCrateApiRustSharedCoreClientSessionForPersistenceConstMeta =>
       const TaskConstMeta(
-        debugName: "RustSharedCoreClient_session",
+        debugName: "RustSharedCoreClient_session_for_persistence",
         argNames: ["that"],
       );
 
@@ -1055,7 +1004,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 21,
+            funcId: 20,
             port: port_,
           );
         },
@@ -1074,80 +1023,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
       const TaskConstMeta(
         debugName: "RustSharedCoreClient_set_device",
         argNames: ["that", "device"],
-      );
-
-  @override
-  Future<void> crateApiRustSharedCoreClientSetSession({
-    required RustSharedCoreClient that,
-    required BridgeSession session,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustSharedCoreClient(
-            that,
-            serializer,
-          );
-          sse_encode_box_autoadd_bridge_session(session, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 22,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_bridge_error,
-        ),
-        constMeta: kCrateApiRustSharedCoreClientSetSessionConstMeta,
-        argValues: [that, session],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRustSharedCoreClientSetSessionConstMeta =>
-      const TaskConstMeta(
-        debugName: "RustSharedCoreClient_set_session",
-        argNames: ["that", "session"],
-      );
-
-  @override
-  Future<void> crateApiRustSharedCoreClientStartSession({
-    required RustSharedCoreClient that,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustSharedCoreClient(
-            that,
-            serializer,
-          );
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 23,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_bridge_error,
-        ),
-        constMeta: kCrateApiRustSharedCoreClientStartSessionConstMeta,
-        argValues: [that],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRustSharedCoreClientStartSessionConstMeta =>
-      const TaskConstMeta(
-        debugName: "RustSharedCoreClient_start_session",
-        argNames: ["that"],
       );
 
   @override
@@ -1170,7 +1045,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 24,
+            funcId: 21,
             port: port_,
           );
         },
@@ -1210,7 +1085,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 25,
+            funcId: 22,
             port: port_,
           );
         },
@@ -1250,7 +1125,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 26,
+            funcId: 23,
             port: port_,
           );
         },
@@ -1291,7 +1166,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 27,
+            funcId: 24,
             port: port_,
           );
         },
@@ -1329,7 +1204,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 28,
+            funcId: 25,
             port: port_,
           );
         },
@@ -1370,7 +1245,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 29,
+            funcId: 26,
             port: port_,
           );
         },
@@ -1412,7 +1287,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 30,
+            funcId: 27,
             port: port_,
           );
         },
@@ -1454,7 +1329,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 31,
+            funcId: 28,
             port: port_,
           );
         },
@@ -1496,7 +1371,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 32,
+            funcId: 29,
             port: port_,
           );
         },
@@ -1538,7 +1413,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 33,
+            funcId: 30,
             port: port_,
           );
         },
@@ -1578,7 +1453,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 34,
+            funcId: 31,
             port: port_,
           );
         },
@@ -1608,7 +1483,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 35,
+            funcId: 32,
             port: port_,
           );
         },
@@ -1638,7 +1513,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 36,
+            funcId: 33,
             port: port_,
           );
         },
@@ -1665,7 +1540,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 37,
+            funcId: 34,
             port: port_,
           );
         },
@@ -1695,7 +1570,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 38,
+            funcId: 35,
             port: port_,
           );
         },
@@ -1725,7 +1600,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 39,
+            funcId: 36,
             port: port_,
           );
         },
@@ -1819,12 +1694,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
   }
 
   @protected
-  BridgeSession dco_decode_box_autoadd_bridge_session(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_bridge_session(raw);
-  }
-
-  @protected
   BridgeSingularIdentifiers dco_decode_box_autoadd_bridge_singular_identifiers(
     dynamic raw,
   ) {
@@ -1903,13 +1772,14 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
   BridgeError dco_decode_bridge_error(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return BridgeError(
       code: dco_decode_bridge_error_code(arr[0]),
       message: dco_decode_String(arr[1]),
       httpStatus: dco_decode_opt_box_autoadd_i_32(arr[2]),
       backendCode: dco_decode_opt_box_autoadd_i_32(arr[3]),
+      retryable: dco_decode_bool(arr[4]),
     );
   }
 
@@ -2157,14 +2027,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
   }
 
   @protected
-  BridgeSession sse_decode_box_autoadd_bridge_session(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return (sse_decode_bridge_session(deserializer));
-  }
-
-  @protected
   BridgeSingularIdentifiers sse_decode_box_autoadd_bridge_singular_identifiers(
     SseDeserializer deserializer,
   ) {
@@ -2274,11 +2136,13 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
     var var_message = sse_decode_String(deserializer);
     var var_httpStatus = sse_decode_opt_box_autoadd_i_32(deserializer);
     var var_backendCode = sse_decode_opt_box_autoadd_i_32(deserializer);
+    var var_retryable = sse_decode_bool(deserializer);
     return BridgeError(
       code: var_code,
       message: var_message,
       httpStatus: var_httpStatus,
       backendCode: var_backendCode,
+      retryable: var_retryable,
     );
   }
 
@@ -2579,15 +2443,6 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
   }
 
   @protected
-  void sse_encode_box_autoadd_bridge_session(
-    BridgeSession self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_bridge_session(self, serializer);
-  }
-
-  @protected
   void sse_encode_box_autoadd_bridge_singular_identifiers(
     BridgeSingularIdentifiers self,
     SseSerializer serializer,
@@ -2670,6 +2525,7 @@ class SharedCoreRustLibApiImpl extends SharedCoreRustLibApiImplPlatform
     sse_encode_String(self.message, serializer);
     sse_encode_opt_box_autoadd_i_32(self.httpStatus, serializer);
     sse_encode_opt_box_autoadd_i_32(self.backendCode, serializer);
+    sse_encode_bool(self.retryable, serializer);
   }
 
   @protected
@@ -2886,18 +2742,11 @@ class RustSharedCoreClientImpl extends RustOpaque
         .rust_arc_decrement_strong_count_RustSharedCoreClientPtr,
   );
 
-  Future<String> accessToken() => SharedCoreRustLib.instance.api
-      .crateApiRustSharedCoreClientAccessToken(that: this);
-
-  Future<String> bindEmail({required String email, required String password}) =>
-      SharedCoreRustLib.instance.api.crateApiRustSharedCoreClientBindEmail(
+  Future<String> bootstrap({String? accessToken}) =>
+      SharedCoreRustLib.instance.api.crateApiRustSharedCoreClientBootstrap(
         that: this,
-        email: email,
-        password: password,
+        accessToken: accessToken,
       );
-
-  Future<void> clearSession() => SharedCoreRustLib.instance.api
-      .crateApiRustSharedCoreClientClearSession(that: this);
 
   Future<String> deleteHistoryItems({required List<int> ids}) =>
       SharedCoreRustLib.instance.api
@@ -2978,25 +2827,22 @@ class RustSharedCoreClientImpl extends RustOpaque
         threeToken: threeToken,
       );
 
+  Future<String> logout() => SharedCoreRustLib.instance.api
+      .crateApiRustSharedCoreClientLogout(that: this);
+
   Future<String> refreshAccount() => SharedCoreRustLib.instance.api
       .crateApiRustSharedCoreClientRefreshAccount(that: this);
 
-  Future<BridgeSession> session() => SharedCoreRustLib.instance.api
-      .crateApiRustSharedCoreClientSession(that: this);
+  Future<BridgeSession> sessionForPersistence() => SharedCoreRustLib
+      .instance
+      .api
+      .crateApiRustSharedCoreClientSessionForPersistence(that: this);
 
   Future<void> setDevice({required BridgeDeviceInfo device}) =>
       SharedCoreRustLib.instance.api.crateApiRustSharedCoreClientSetDevice(
         that: this,
         device: device,
       );
-
-  Future<void> setSession({required BridgeSession session}) => SharedCoreRustLib
-      .instance
-      .api
-      .crateApiRustSharedCoreClientSetSession(that: this, session: session);
-
-  Future<void> startSession() => SharedCoreRustLib.instance.api
-      .crateApiRustSharedCoreClientStartSession(that: this);
 
   Future<String> submitVideoTask({required BridgeSubmitVideoOptions options}) =>
       SharedCoreRustLib.instance.api

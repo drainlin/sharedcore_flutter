@@ -10,8 +10,9 @@ import 'errors.dart';
 import 'generated/api.dart' as bridge;
 import 'generated/frb_generated.dart';
 import 'models.dart';
-import 'platform_session_store.dart';
 import 'purchase_classifier.dart';
+
+part 'platform_session_store.dart';
 
 /// Application-level SharedCore singleton and Rust library entry point.
 abstract final class SharedCore {
@@ -144,7 +145,8 @@ class SharedCoreClient {
   final bridge.RustSharedCoreClient _inner;
   final bool _persistsPlatformSession;
   final String _platform;
-  SharedCoreSession? _lastPersistedSession;
+  _StoredSharedCoreSession? _lastPersistedSession;
+  Future<void> _sessionPersistenceTail = Future<void>.value();
   SharedCorePurchaseCatalog? _purchaseCatalog;
   Future<SharedCorePurchaseCatalog>? _purchaseCatalogInFlight;
 
@@ -179,7 +181,7 @@ class SharedCoreClient {
           collected.platform == 'ios' || collected.platform == 'android',
       platform: collected.platform,
     );
-    await client._restorePlatformSession();
+    await client._bootstrapPlatformSession();
     return client;
   }
 
@@ -191,35 +193,30 @@ class SharedCoreClient {
   Future<void> setDevice(SharedCoreDeviceInfo device) =>
       _guard(() => _inner.setDevice(device: _deviceToBridge(device)));
 
-  /// Returns the current Rust session.
-  Future<SharedCoreSession> session() =>
-      _guard(() async => _sessionFromBridge(await _inner.session()));
-
-  /// Returns the current access token, or an empty string without a session.
-  Future<String> get accessToken => _guard(_inner.accessToken);
-
   /// Returns the current account email.
   Future<String> get email => _guard(_inner.email);
 
   /// Reports whether the current session contains a non-blank email.
   Future<bool> get hasBindEmail => _guard(_inner.hasBindEmail);
 
-  /// Imports an access token and refreshes the complete account session.
-  Future<void> setSession({required String accessToken}) async {
-    _requireNonBlank(accessToken, 'Access token is empty');
-    await _guard(
-      () => _inner.setSession(
-        session: _sessionToBridge(SharedCoreSession(accessToken: accessToken)),
-      ),
-    );
-    await refreshAccount();
+  /// Logs out and replaces the current credential with a fresh anonymous session.
+  Future<void> logout() async {
+    Object? operationError;
+    StackTrace? operationStackTrace;
+    try {
+      await _mapped(_inner.logout, SharedCoreAccountSnapshot.fromMap);
+    } catch (error, stackTrace) {
+      operationError = error;
+      operationStackTrace = stackTrace;
+    }
+
+    // Logout is security-sensitive: a secure-store deletion failure must be
+    // visible even when creating the replacement anonymous session also fails.
+    await _persistPlatformSessionIfChanged();
+    if (operationError != null) {
+      Error.throwWithStackTrace(operationError, operationStackTrace!);
+    }
   }
-
-  /// Clears the Rust session.
-  Future<void> clearSession() => _guardPersisting(_inner.clearSession);
-
-  /// Starts or refreshes the backend session.
-  Future<void> startSession() => _guardPersisting(_inner.startSession);
 
   /// Refreshes the current account snapshot.
   Future<SharedCoreAccountSnapshot> refreshAccount() => _mappedPersisting(
@@ -227,20 +224,10 @@ class SharedCoreClient {
     SharedCoreAccountSnapshot.fromMap,
   );
 
-  /// Binds an email and password to the current session.
-  Future<SharedCoreAccountSnapshot> bindEmail({
-    required String email,
-    required String password,
-  }) async {
-    _requireNonBlank(email, 'Email is empty');
-    _requireNonBlank(password, 'Password is empty');
-    return _mappedPersisting(
-      () => _inner.bindEmail(email: email, password: password),
-      SharedCoreAccountSnapshot.fromMap,
-    );
-  }
-
   /// Updates the password of the current account.
+  ///
+  /// Login and registration both use [login]; this is only for changing the
+  /// password of an existing email account.
   Future<SharedCoreAccountSnapshot> updatePassword(String newPassword) async {
     _requireNonBlank(newPassword, 'New password is empty');
     return _mappedPersisting(
@@ -249,7 +236,7 @@ class SharedCoreClient {
     );
   }
 
-  /// Logs in with email/password or a third-party token.
+  /// Logs in or registers with email/password or a third-party token.
   Future<SharedCoreAccountSnapshot> login({
     String? email,
     String? password,
@@ -540,15 +527,28 @@ class SharedCoreClient {
   Future<List<String>> loadSensitiveWords() =>
       _guardPersisting(_inner.loadSensitiveWords);
 
-  Future<void> _restorePlatformSession() async {
+  Future<void> _bootstrapPlatformSession() async {
     if (!_persistsPlatformSession) return;
     final restored = await _platformStoreGuard(
       () =>
-          loadSharedCorePlatformSession(configuration.sessionStorageKeyPrefix),
+          _loadSharedCorePlatformSession(configuration.sessionStorageKeyPrefix),
     );
-    if (restored == null) return;
-    await _guard(() => _inner.setSession(session: _sessionToBridge(restored)));
     _lastPersistedSession = restored;
+    try {
+      await _guard(() => _inner.bootstrap(accessToken: restored?.accessToken));
+    } on SharedCoreException catch (error) {
+      // Rust may have rejected and cleared a restored credential before an
+      // anonymous fallback failed. Persist that state even on the error path
+      // so an invalid token can never remain in secure storage.
+      await _persistPlatformSessionIfChanged();
+      final canRetryLater =
+          restored != null &&
+          (error.localError == SharedCoreLocalError.network ||
+              error.localError == SharedCoreLocalError.timeout);
+      if (!canRetryLater) rethrow;
+      return;
+    }
+    await _persistPlatformSessionIfChanged();
   }
 
   Future<T> _guardPersisting<T>(Future<T> Function() operation) =>
@@ -566,19 +566,38 @@ class SharedCoreClient {
 
   Future<T> _persistAfter<T>(Future<T> operation) async {
     try {
-      return await operation;
-    } finally {
+      final result = await operation;
       await _persistPlatformSessionIfChanged();
+      return result;
+    } catch (error, stackTrace) {
+      // This is a no-op when Session state did not change. If a real secure
+      // write or deletion fails, surface that storage error instead of hiding
+      // a potentially stale credential behind the original operation error.
+      await _persistPlatformSessionIfChanged();
+      Error.throwWithStackTrace(error, stackTrace);
     }
   }
 
-  Future<void> _persistPlatformSessionIfChanged() async {
-    if (!_persistsPlatformSession) return;
-    final current = _sessionFromBridge(await _guard(_inner.session));
+  Future<void> _persistPlatformSessionIfChanged() {
+    if (!_persistsPlatformSession) return Future<void>.value();
+    final next = _sessionPersistenceTail.then(
+      (_) => _persistPlatformSessionNow(),
+    );
+    _sessionPersistenceTail = next.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return next;
+  }
+
+  Future<void> _persistPlatformSessionNow() async {
+    final current = _storedSessionFromBridge(
+      await _guard(_inner.sessionForPersistence),
+    );
     if (_sameSession(current, _lastPersistedSession)) return;
     if (current.accessToken.trim().isEmpty) {
       await _platformStoreGuard(
-        () => clearSharedCorePlatformSession(
+        () => _clearSharedCorePlatformSession(
           configuration.sessionStorageKeyPrefix,
         ),
       );
@@ -586,7 +605,7 @@ class SharedCoreClient {
       return;
     }
     await _platformStoreGuard(
-      () => saveSharedCorePlatformSession(
+      () => _saveSharedCorePlatformSession(
         configuration.sessionStorageKeyPrefix,
         current,
       ),
@@ -608,7 +627,10 @@ Future<T> _platformStoreGuard<T>(Future<T> Function() operation) async {
   }
 }
 
-bool _sameSession(SharedCoreSession current, SharedCoreSession? previous) =>
+bool _sameSession(
+  _StoredSharedCoreSession current,
+  _StoredSharedCoreSession? previous,
+) =>
     previous != null &&
     current.accessToken == previous.accessToken &&
     current.userId == previous.userId &&
@@ -624,12 +646,14 @@ Future<T> _guard<T>(Future<T> Function() operation) async {
         backendCode: backendCode,
         message: error.message,
         httpStatus: error.httpStatus,
+        isRetryable: error.retryable,
       );
     }
     throw SharedCoreException(
       localError: _localErrorFromBridge(error.code),
       message: error.message,
       httpStatus: error.httpStatus,
+      isRetryable: error.retryable,
     );
   } on FormatException catch (error) {
     throw SharedCoreException(
@@ -659,10 +683,10 @@ SharedCoreLocalError _localErrorFromBridge(bridge.BridgeErrorCode code) =>
       bridge.BridgeErrorCode.invalidState => SharedCoreLocalError.invalidState,
       bridge.BridgeErrorCode.network => SharedCoreLocalError.network,
       bridge.BridgeErrorCode.timeout => SharedCoreLocalError.timeout,
-      bridge.BridgeErrorCode.unauthorized ||
-      bridge.BridgeErrorCode.forbidden ||
-      bridge.BridgeErrorCode.notFound ||
-      bridge.BridgeErrorCode.server => SharedCoreLocalError.http,
+      bridge.BridgeErrorCode.unauthorized => SharedCoreLocalError.unauthorized,
+      bridge.BridgeErrorCode.forbidden => SharedCoreLocalError.forbidden,
+      bridge.BridgeErrorCode.notFound => SharedCoreLocalError.notFound,
+      bridge.BridgeErrorCode.server => SharedCoreLocalError.server,
       bridge.BridgeErrorCode.parse => SharedCoreLocalError.parse,
       bridge.BridgeErrorCode.paymentVerificationFailed =>
         SharedCoreLocalError.paymentVerification,
@@ -784,15 +808,8 @@ SharedCoreDeviceInfo _deviceFromBridge(bridge.BridgeDeviceInfo value) =>
       installReferrer: value.installReferrer,
     );
 
-bridge.BridgeSession _sessionToBridge(SharedCoreSession value) =>
-    bridge.BridgeSession(
-      accessToken: value.accessToken,
-      userId: value.userId,
-      email: value.email,
-    );
-
-SharedCoreSession _sessionFromBridge(bridge.BridgeSession value) =>
-    SharedCoreSession(
+_StoredSharedCoreSession _storedSessionFromBridge(bridge.BridgeSession value) =>
+    _StoredSharedCoreSession(
       accessToken: value.accessToken,
       userId: value.userId,
       email: value.email,

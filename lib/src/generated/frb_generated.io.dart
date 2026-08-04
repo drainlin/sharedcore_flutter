@@ -62,9 +62,6 @@ abstract class SharedCoreRustLibApiImplPlatform
   );
 
   @protected
-  BridgeSession dco_decode_box_autoadd_bridge_session(dynamic raw);
-
-  @protected
   BridgeSingularIdentifiers dco_decode_box_autoadd_bridge_singular_identifiers(
     dynamic raw,
   );
@@ -185,11 +182,6 @@ abstract class SharedCoreRustLibApiImplPlatform
 
   @protected
   BridgePurchaseReceipt sse_decode_box_autoadd_bridge_purchase_receipt(
-    SseDeserializer deserializer,
-  );
-
-  @protected
-  BridgeSession sse_decode_box_autoadd_bridge_session(
     SseDeserializer deserializer,
   );
 
@@ -334,12 +326,6 @@ abstract class SharedCoreRustLibApiImplPlatform
   @protected
   void sse_encode_box_autoadd_bridge_purchase_receipt(
     BridgePurchaseReceipt self,
-    SseSerializer serializer,
-  );
-
-  @protected
-  void sse_encode_box_autoadd_bridge_session(
-    BridgeSession self,
     SseSerializer serializer,
   );
 

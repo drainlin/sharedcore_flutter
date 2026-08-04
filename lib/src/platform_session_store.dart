@@ -1,20 +1,33 @@
-import 'package:flutter/services.dart';
+part of 'client.dart';
 
-import 'configuration.dart';
+/// Internal credential snapshot exchanged only between Rust and native secure storage.
+class _StoredSharedCoreSession {
+  const _StoredSharedCoreSession({
+    required this.accessToken,
+    this.userId = '',
+    this.email = '',
+  });
+
+  final String accessToken;
+  final String userId;
+  final String email;
+}
 
 const MethodChannel _sessionStoreChannel = MethodChannel(
   'sharedcore_flutter/device_info',
 );
 
 /// Restores the session persisted by the platform plugin.
-Future<SharedCoreSession?> loadSharedCorePlatformSession(String prefix) async {
+Future<_StoredSharedCoreSession?> _loadSharedCorePlatformSession(
+  String prefix,
+) async {
   final values = await _sessionStoreChannel.invokeMapMethod<String, Object?>(
     'loadSession',
     <String, Object?>{'prefix': prefix},
   );
   final accessToken = _string(values?['accessToken']);
   if (accessToken.trim().isEmpty) return null;
-  return SharedCoreSession(
+  return _StoredSharedCoreSession(
     accessToken: accessToken,
     userId: _string(values?['userId']),
     email: _string(values?['email']),
@@ -22,9 +35,9 @@ Future<SharedCoreSession?> loadSharedCorePlatformSession(String prefix) async {
 }
 
 /// Persists a session using the configured platform storage namespace.
-Future<void> saveSharedCorePlatformSession(
+Future<void> _saveSharedCorePlatformSession(
   String prefix,
-  SharedCoreSession session,
+  _StoredSharedCoreSession session,
 ) => _sessionStoreChannel.invokeMethod<void>('saveSession', <String, Object?>{
   'prefix': prefix,
   'accessToken': session.accessToken,
@@ -33,7 +46,7 @@ Future<void> saveSharedCorePlatformSession(
 });
 
 /// Clears the session persisted by the platform plugin.
-Future<void> clearSharedCorePlatformSession(String prefix) =>
+Future<void> _clearSharedCorePlatformSession(String prefix) =>
     _sessionStoreChannel.invokeMethod<void>('clearSession', <String, Object?>{
       'prefix': prefix,
     });

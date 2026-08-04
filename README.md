@@ -27,7 +27,6 @@ final client = await SharedCore.configure(
   ),
 );
 
-await client.setSession(accessToken: 'token');
 final home = await SharedCore.instance.loadHomeContent();
 
 final videoHistory = await client.loadVideoHistoryItems();
@@ -66,19 +65,36 @@ parameter shapes were removed so every operation has one public spelling.
 Endpoint paths are entirely plugin-owned: callers cannot enumerate or override
 them.
 
+Email login and registration both use `login`. Use `updatePassword` only to
+change the password of the current email account; there is no separate email
+binding API.
+
+Session credentials are entirely SDK-owned. `configure` restores and validates
+the secure credential or creates a fresh anonymous session. Applications never
+read, inject, or persist the access token; use `logout` to leave the current
+account and immediately create a new anonymous session.
+
+All operational failures are exposed as `SharedCoreException`. Callers can
+branch on `backendCode` versus `localError`, inspect `httpStatus`, use
+`isRetryable` for delayed retry, and use `isAuthenticationError` when UI login
+guidance is appropriate. Credential refresh and anonymous recovery are attempted
+inside the SDK before an authentication failure reaches the application. A
+failed credential write or deletion is never hidden; it is reported as
+`SharedCoreLocalError.sessionStorageUnavailable`.
+
 ### Endpoint path strategy
 
 `SharedCoreConfiguration.apiPathMode` selects the production endpoint path
 source:
 
-- `SharedCoreApiPathMode.builtIn` (default): use protected paths bundled with
-  the native core.
-- `SharedCoreApiPathMode.bundleDerived`: derive deterministic endpoint paths in
+- `SharedCoreApiPathMode.bundleDerived` (default): derive deterministic endpoint paths in
   Rust from the runtime Android
   package name or iOS bundle identifier. The plugin collects this identifier
   automatically. In this mode the Rust core also ignores caller-supplied
   `jsonNoisePrefix` and `jsonNoiseFieldCount`: it derives the noise prefix and
   fixes the field count at 20.
+- `SharedCoreApiPathMode.builtIn`: use protected paths bundled with the native
+  core. Select this explicitly only when the backend uses those paths.
 
 The v1 SHA-256 input concatenates the fixed 16-byte salt
 `9d61e74a2cb853f016aa7c35d2894eb1`, the bundle ID's four-byte big-endian UTF-8
@@ -125,16 +141,13 @@ Only host-owned device metadata and platform session persistence use a Flutter
 method channel.
 
 The plugin automatically restores and persists the SharedCore session on both
-Android and iOS. Android uses plugin-owned private `SharedPreferences`; iOS uses
-the original plugin's `NSUserDefaults` keys for upgrade continuity. The default
-prefix is `SharedCore`; set `sessionStorageKeyPrefix` in
-`SharedCoreConfiguration` only when separate products need different session
-namespaces or the previous iOS integration used a custom prefix.
-
-For an Android upgrade from 0.2.1, import an existing app-owned session once
-with `setSession(accessToken: oldToken)`. After that first import, 0.3.0
-persists and restores it automatically; a plugin cannot discover an arbitrary
-storage location chosen by the host application.
+Android and iOS. Android encrypts the credential with an app-owned Android
+Keystore key before storing the ciphertext. iOS stores it in Keychain with a
+this-device-only accessibility class. Existing plugin-owned plaintext values
+are migrated internally. A sandbox installation marker clears a surviving iOS
+Keychain credential after a normal uninstall and reinstall. The default prefix
+is `SharedCore`; set `sessionStorageKeyPrefix` only when separate products need
+different session namespaces.
 
 ## Documentation
 

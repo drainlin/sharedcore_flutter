@@ -74,8 +74,8 @@ final client = await SharedCore.configure(
 
 0.3.0 使用 `apiPathMode` 明确选择路径来源：
 
-- `SharedCoreApiPathMode.builtIn`：默认值，使用插件保护的内置路径。
-- `SharedCoreApiPathMode.bundleDerived`：根据运行时 Android 包名或 iOS Bundle ID 派生混淆路径。
+- `SharedCoreApiPathMode.bundleDerived`：默认值，根据运行时 Android 包名或 iOS Bundle ID 派生混淆路径。
+- `SharedCoreApiPathMode.builtIn`：使用插件保护的内置路径，需要时显式指定。
 
 `SharedCoreEndpoint`、`endpointPaths` 和 `SharedCoreApiPathMode.custom` 已删除。
 旧项目必须删除路径映射，并在 `builtIn` 与 `bundleDerived` 之间选择。
@@ -105,29 +105,21 @@ SharedCoreConfiguration(
 
 ## 3. Session 与登录状态
 
-0.2.1 恢复 Session 时可以同时传 `accessToken`、`userId` 和 `email`：
+当前版本由插件完整管理 Session。应用只需调用 `SharedCore.configure`：插件会从安全
+存储恢复并验证凭据；没有凭据或凭据失效时，会自动建立新的匿名 Session。
 
-```dart
-await client.setSession(
-  accessToken: savedSession.accessToken,
-  userId: savedSession.userId,
-  email: savedSession.email,
-);
-```
+以下 API 已删除且没有公开替代入口：
 
-0.3.0 只接受 token，并自动请求后端补齐账号信息：
+- `accessToken`
+- `session()` / `SharedCoreSession`
+- `setSession(...)`
+- `startSession()`
+- `clearSession()`
 
-```dart
-await client.setSession(accessToken: savedAccessToken);
-```
-
-需要注意：
-
-- `setSession` 现在会发起网络请求，只有账号刷新成功才算导入完成。
-- iOS 继续使用原插件的 `NSUserDefaults` 键；默认 `sessionStorageKeyPrefix: 'SharedCore'` 时可以直接恢复旧 Session。
-- Android 0.3.0 改为插件私有 `SharedPreferences` 自动持久化。旧版本的 token 如果保存在 App 自己的任意位置，需要在升级后的第一次启动调用一次 `setSession(accessToken: oldToken)`。
-- 此后 `configure` 会自动恢复 Session，登录、绑定、刷新和退出也会自动保存或清理 Session。
-- `migrateUserSession` 已彻底删除，没有替代 API。
+登录和注册统一调用 `login`，退出当前账号调用 `logout`。应用不再读取、保存或注入
+凭据。iOS 会把插件旧有的 UserDefaults 凭据自动迁移到 Keychain；Android 会把插件
+旧有的明文 SharedPreferences 凭据自动迁移为 Android Keystore 加密密文。0.2.1
+如果把凭据保存在 App 自选的任意位置，插件无法定位该存储，升级后会建立新 Session。
 
 ## 4. 方法迁移
 
@@ -144,6 +136,8 @@ await client.setSession(accessToken: savedAccessToken);
 | 四个 Apple/Google 购买与订阅验证方法 | `verifyPurchase(productId:, purchaseData:)` | 自动判断平台和购买类型 |
 | `loadSensitiveWordList()` | `loadSensitiveWords()` | 仅名称调整 |
 | `migrateUserSession(...)` | 已删除 | 不再提供用户迁移接口 |
+| `accessToken` / `session()` / `setSession()` / `startSession()` | 已删除 | Session 完全由插件维护 |
+| `clearSession()` | `logout()` | 退出后自动创建新的匿名 Session |
 
 分页参数也从可空值改为明确默认值：`page = 1`、`pageSize = 20`，并要求二者大于零。
 
@@ -196,7 +190,7 @@ final result = await client.verifyPurchase(
 
 ## 7. 异常处理
 
-0.2.1 的 `code`、`errorCode`、`type`、`errorName`、`businessCode`、`businessReason`、`retryable` 和 `underlying*` 已全部删除。
+0.2.1 的 `code`、`errorCode`、`type`、`errorName`、`businessCode`、`businessReason` 和 `underlying*` 已全部删除；旧 `retryable` 字段改为语义明确的 `isRetryable`。
 
 0.3.0 只区分两种来源：
 
@@ -204,7 +198,11 @@ final result = await client.verifyPurchase(
 try {
   await client.loadHomeContent();
 } on SharedCoreException catch (error) {
-  if (error.isBackendError) {
+  if (error.isRetryable) {
+    scheduleRetry();
+  } else if (error.isAuthenticationError) {
+    showLoginGuidance();
+  } else if (error.isBackendError) {
     // backendCode 和 message 来自后端业务响应。
     handleBackendError(error.backendCode!, error.message);
   } else {
@@ -218,7 +216,9 @@ try {
 - 本地错误：`backendCode == null`、`localError != null`。
 - `message` 是后端返回的消息或本机诊断信息。
 - `httpStatus` 只有在能取得 HTTP 状态码时才非空。
-- 没有后端业务包裹的 HTTP 失败归类为 `SharedCoreLocalError.http`。
+- `isRetryable` 对网络、超时、408、425、429 和 5xx 为 `true`。
+- `isAuthenticationError` 表示 SDK 自动恢复后仍存在认证失败。
+- 没有后端业务包裹的 401/403/404/5xx 分别归类为 `unauthorized`、`forbidden`、`notFound`、`server`；其他 HTTP 失败使用 `http`。
 
 ## 8. Endpoint 配置删除
 
@@ -231,7 +231,7 @@ try {
 - `SharedCoreReplacementApp.hasTarget` 删除。
 - `SharedCoreReplacementApp.isEnabled` 只读取后端 `enabled` 或 `newAppEnabled`；字段缺失或无法解析时为 `false`。
 - `SharedCorePurchaseVerificationResult.shouldDiscardReceipt` 删除。
-- 新增 `SharedCoreSession`，用于读取插件当前持有的完整 Session；调用方恢复 Session 时仍只传 `accessToken`。
+- `SharedCoreSession` 已删除，凭据不会进入公开数据模型。
 
 ## 10. 平台与产物
 
@@ -262,8 +262,8 @@ Android 所需的微信/QQ package visibility queries 已由插件声明。
 - [ ] 删除 `SharedCoreDeviceConfiguration`，只在必要时使用 `deviceOverrides`。
 - [ ] 明确 `signSecret: null` 的语义。
 - [ ] 删除 `SharedCoreEndpoint`、`endpointPaths` 和 `SharedCoreApiPathMode.custom` 的使用。
-- [ ] 将旧 Session 恢复代码改为只传 `accessToken`。
-- [ ] Android 在首次升级启动时导入 App 原来保存的 token。
+- [ ] 删除所有读取、保存或注入 Session 凭据的代码。
+- [ ] 将 `clearSession()` 改为 `logout()`。
 - [ ] 替换已改名或已删除的方法。
 - [ ] 将四个购买验证入口改为 `verifyPurchase`。
 - [ ] 将错误处理改为 `backendCode` / `localError` 两路分流。

@@ -262,7 +262,7 @@
         <div class="grid">
           <article class="card"><h3>直接作为 Flutter 插件使用</h3><p>添加依赖后通过公开 Dart API 调用，不需要配置额外的开发环境。</p></article>
           <article class="card"><h3>网络由插件管理</h3><p>插件负责请求、证书校验、签名和错误转换，不需要 App 注入 HTTP 客户端。</p></article>
-          <article class="card"><h3>宿主仍有职责</h3><p>token 安全存储、商店购买和文件选择仍由 Flutter App 完成；插件自动读取系统设备元数据。</p></article>
+          <article class="card"><h3>宿主仍有职责</h3><p>商店购买和文件选择仍由 Flutter App 完成；插件自动读取设备元数据并安全维护 Session 凭据。</p></article>
         </div>
         <div class="callout purple"><strong>只导入公开入口：</strong><code>package:sharedcore_flutter/sharedcore_flutter.dart</code>。不要导入 <code>src/</code> 下的文件。</div>
       </section>
@@ -349,7 +349,8 @@
               <tr><td><code>device: SharedCoreDeviceConfiguration(...)</code></td><td><code>deviceOverrides: SharedCoreDeviceOverrides(...)</code></td></tr>
               <tr><td><code>proxyHost</code> / <code>proxyPort</code></td><td><code>http: SharedCoreHttpConfiguration(proxyUrl: ...)</code></td></tr>
               <tr><td>没有明确的路径模式</td><td><code>apiPathMode: SharedCoreApiPathMode...</code></td></tr>
-              <tr><td><code>setSession(accessToken:, userId:, email:)</code></td><td><code>setSession(accessToken: ...)</code></td></tr>
+              <tr><td><code>accessToken</code> / <code>session()</code> / <code>setSession()</code> / <code>startSession()</code></td><td>由 <code>SharedCore.configure</code> 自动维护</td></tr>
+              <tr><td><code>clearSession()</code></td><td><code>logout()</code></td></tr>
               <tr><td><code>uploadUserDeviceIdentifiers(...命名参数)</code></td><td><code>uploadUserDeviceIdentifiers(SharedCoreSingularIdentifiers(...))</code></td></tr>
               <tr><td><code>exchangeCode(code)</code> → <code>Future&lt;Map&gt;</code></td><td><code>exchangeCode(code)</code> → <code>Future&lt;bool&gt;</code></td></tr>
               <tr><td><code>uploadFileResult(path)</code></td><td><code>uploadFile(path)</code></td></tr>
@@ -360,24 +361,19 @@
               <tr><td><code>loadSensitiveWordList()</code></td><td><code>loadSensitiveWords()</code></td></tr>
               <tr><td>四个 Apple/Google 购买与订阅验证方法</td><td><code>verifyPurchase(productId:, purchaseData:)</code></td></tr>
               <tr><td><code>migrateUserSession(...)</code></td><td>已移除，没有替代入口</td></tr>
-              <tr><td><code>errorCode</code> / <code>errorName</code> / <code>code</code> / <code>type</code> / <code>businessCode</code> / <code>businessReason</code> / <code>retryable</code></td><td><code>backendCode</code> / <code>localError</code> / <code>message</code> / <code>httpStatus</code></td></tr>
+              <tr><td><code>errorCode</code> / <code>errorName</code> / <code>code</code> / <code>type</code> / <code>businessCode</code> / <code>businessReason</code> / <code>retryable</code></td><td><code>backendCode</code> / <code>localError</code> / <code>message</code> / <code>httpStatus</code> / <code>isRetryable</code></td></tr>
             </tbody>
           </table>
         </div>
         <h3>Session 迁移</h3>
-        <div class="code-block">
-          <div class="code-label"><span>Dart · 新的恢复方式</span><button class="copy" type="button">复制</button></div>
-          <pre><code>await client.setSession(accessToken: savedAccessToken);</code></pre>
-        </div>
-        <p><code>setSession</code> 现在会请求后端刷新账号并补齐 <code>userId</code> 和 <code>email</code>。iOS 默认沿用旧插件的 <code>NSUserDefaults</code> 键，可以自动恢复；Android 改为插件私有 <code>SharedPreferences</code>，如果 0.2.1 的 token 由 App 自己保存，升级后的第一次启动需要手动导入一次。</p>
-        <div class="callout warning"><strong>Android 只需要迁移一次。</strong>调用 <code>setSession(accessToken: oldToken)</code> 成功后，0.3.0 会自动保存完整 Session；以后 <code>configure</code> 会自动恢复。<code>clearSession()</code> 会同步清除平台存储。</div>
+        <p><code>SharedCore.configure</code> 会自动恢复、验证或创建 Session。应用不再读取、保存或注入凭据。iOS 自动把旧 UserDefaults 凭据迁移到 Keychain；Android 自动把插件旧有的明文 SharedPreferences 凭据迁移为 Android Keystore 加密密文。</p>
+        <div class="callout warning"><strong>App 自选存储无法自动发现。</strong>0.2.1 Android 如果把凭据放在宿主任意位置，升级后会建立新 Session；当前版本不再提供公开导入入口。</div>
         <h3>路径与测试服</h3>
         <div class="grid">
-          <article class="card"><h3>builtIn（默认）</h3><p>使用插件保护的内置路径，适合绝大多数 App。</p></article>
-          <article class="card"><h3>bundleDerived</h3><p>按 App 标识派生路径，需要服务端实现相同规则。</p></article>
-          <article class="card"><h3>bundleDerived</h3><p>根据运行时 Bundle ID/包名派生路径，同时派生 JSON noise 前缀并固定为 20 项。</p></article>
+          <article class="card"><h3>bundleDerived（默认）</h3><p>根据运行时 Bundle ID/包名派生路径，同时派生 JSON noise 前缀并固定为 20 项。</p></article>
+          <article class="card"><h3>builtIn</h3><p>使用插件保护的内置路径，需要时显式指定。</p></article>
         </div>
-        <p>0.2.1 如果只覆盖了少量 Endpoint，不能把原映射直接用于 <code>custom</code>；应改用默认 <code>builtIn</code>，或补齐完整映射。<code>testServerMode: true</code> 优先级最高，会强制使用内置测试服地址和未混淆真实路径。</p>
+        <p>0.2.1 如果只覆盖了少量 Endpoint，不能把原映射直接用于 <code>custom</code>；当前默认使用 <code>bundleDerived</code>，后端仍使用内置路径时需显式选择 <code>builtIn</code>。<code>testServerMode: true</code> 优先级最高，会强制使用内置测试服地址和未混淆真实路径。</p>
         <h3>购买验证迁移</h3>
         <div class="code-block">
           <div class="code-label"><span>Dart · 统一购买验证</span><button class="copy" type="button">复制</button></div>
@@ -400,14 +396,14 @@
   }
 }</code></pre>
         </div>
-        <p>后端错误只有 <code>backendCode</code>，本机错误只有 <code>localError</code>；二者不会同时存在。<code>message</code> 分别承载后端返回消息或本机诊断信息，<code>httpStatus</code> 只有在能够取得状态码时才非空。</p>
+        <p>后端错误只有 <code>backendCode</code>，本机错误只有 <code>localError</code>；二者不会同时存在。<code>message</code> 分别承载后端返回消息或本机诊断信息，<code>httpStatus</code> 只有在能够取得状态码时才非空；调用者还可以通过 <code>isRetryable</code> 和 <code>isAuthenticationError</code> 决定重试或展示登录提示。</p>
         <h3>Endpoint 配置删除</h3>
         <p><code>SharedCoreEndpoint</code>、<code>endpointPaths</code> 和 <code>SharedCoreApiPathMode.custom</code> 均已删除。业务调用方法不变，调用方只需删除旧路径配置。</p>
         <h3>模型与平台变化</h3>
         <ul>
           <li><code>SharedCoreReplacementApp.schema</code> 和 <code>hasTarget</code> 已删除；<code>isEnabled</code> 只读取后端 <code>enabled/newAppEnabled</code>。</li>
           <li><code>SharedCorePurchaseVerificationResult.shouldDiscardReceipt</code> 已删除。</li>
-          <li>新增 <code>SharedCoreSession</code> 用于读取完整会话，但恢复会话仍只传 token。</li>
+          <li><code>SharedCoreSession</code> 已删除，凭据不会进入公开模型。</li>
           <li>0.3.0 只支持 Android ARM64、iOS ARM64 真机和 Apple Silicon 模拟器，不支持 x86、x86_64 或 32 位 ARM。</li>
           <li>iOS 检测微信/QQ 需要宿主配置 <code>LSApplicationQueriesSchemes</code>；Android package visibility 已由插件声明。</li>
         </ul>
@@ -484,8 +480,8 @@ final configuration = SharedCoreConfiguration(
           <table>
             <thead><tr><th><code>apiPathMode</code></th><th>行为</th></tr></thead>
             <tbody>
-              <tr><td><code>SharedCoreApiPathMode.builtIn</code>（默认）</td><td>使用插件保护的内置 API 路径；JSON noise 使用调用者配置。</td></tr>
-              <tr><td><code>SharedCoreApiPathMode.bundleDerived</code></td><td>使用 Android 包名或 iOS Bundle ID，为每个 Endpoint 自动生成确定性的混淆路径；JSON noise 前缀也自动生成，字段数固定为 20。</td></tr>
+              <tr><td><code>SharedCoreApiPathMode.bundleDerived</code>（默认）</td><td>使用 Android 包名或 iOS Bundle ID，为每个 Endpoint 自动生成确定性的混淆路径；JSON noise 前缀也自动生成，字段数固定为 20。</td></tr>
+              <tr><td><code>SharedCoreApiPathMode.builtIn</code></td><td>使用插件保护的内置 API 路径；JSON noise 使用调用者配置。</td></tr>
             </tbody>
           </table>
         </div>
@@ -501,24 +497,18 @@ final configuration = SharedCoreConfiguration(
         <div class="callout success"><strong>测试服模式优先级最高。</strong><code>testServerMode: true</code> 会忽略 <code>apiPathMode</code>，使用受保护的内置测试服地址与内置路径，也不要求 Bundle ID 派生条件。</div>
       </section>
 
-      <section id="session" class="section searchable" data-search="session token restore persist login logout startSession setSession clearSession refreshAccount">
+      <section id="session" class="section searchable" data-search="session restore persist login logout refreshAccount secure Keychain Keystore">
         <div class="section-heading">
           <p class="eyebrow">Session</p>
           <h2>恢复、刷新与退出</h2>
-          <p>Android 和 iOS 都会在配置客户端时自动恢复 Session，并在 Session 变化后自动保存。iOS 继续兼容原版插件的 UserDefaults 键；Android 使用插件私有存储。两端都通过 <code>sessionStorageKeyPrefix</code> 隔离不同产品的会话。</p>
+          <p>Android 和 iOS 都会在配置客户端时自动恢复、验证或创建 Session，并在凭据变化后自动安全保存。应用无法读取或注入凭据。iOS 使用 Keychain；Android 使用 Keystore 密钥加密后的插件私有存储。</p>
         </div>
         <div class="code-block">
           <div class="code-label"><span>Dart · 启动流程</span><button class="copy" type="button">复制</button></div>
-          <pre><code>Future&lt;SharedCoreAccountSnapshot&gt; bootstrapAccount(
-  SharedCoreClient client,
-) async {
-  // configure 已自动恢复持久化 Session。
-  if ((await client.accessToken).isEmpty) {
-    await client.startSession();
-  }
+          <pre><code>final client = await SharedCore.configure(configuration);
 
-  return client.refreshAccount();
-}</code></pre>
+// configure 已自动恢复并验证凭据，或创建匿名 Session。
+final account = await client.refreshAccount();</code></pre>
         </div>
         <div class="code-block">
           <div class="code-label"><span>Dart · 登录与退出</span><button class="copy" type="button">复制</button></div>
@@ -527,15 +517,16 @@ final configuration = SharedCoreConfiguration(
   password: password,
 );
 
-// 登录成功后自动持久化；退出时自动删除持久化 Session。
-await client.clearSession();</code></pre>
+// 登录成功后自动安全持久化；退出后自动切换到匿名 Session。
+await client.logout();</code></pre>
         </div>
         <div class="grid">
-          <article class="card"><h3>首次安装</h3><p>创建客户端后调用 <code>startSession()</code>，再读取账号快照。</p></article>
-          <article class="card"><h3>恢复登录</h3><p><code>configure()</code> 自动恢复 Session；检测到已有 token 后直接刷新账号。</p></article>
-          <article class="card"><h3>并发过期</h3><p>授权请求遇到 Session 失效时，插件会合并并发刷新并只重试一次。</p></article>
+          <article class="card"><h3>首次安装</h3><p><code>configure()</code> 自动创建匿名 Session，无需额外启动调用。</p></article>
+          <article class="card"><h3>恢复登录</h3><p><code>configure()</code> 自动恢复 Session；检测到已有安全凭据后直接刷新账号。</p></article>
+          <article class="card"><h3>并发过期</h3><p>授权请求遇到 Session 失效时，插件会合并并发刷新；刷新凭据仍被拒绝时清除旧凭据、匿名恢复并只重试一次。</p></article>
         </div>
-        <div class="callout warning"><strong>Android 0.2.1 升级：</strong>旧版由 App 自己保存的 Session 无法自动定位。已登录用户首次升级到 0.3.0 时，应从原存储读取一次并调用 <code>setSession(accessToken: oldToken)</code>；插件会自动刷新账号、补齐完整 Session，后续冷启动会自动恢复。</div>
+        <div class="callout"><strong>离线恢复：</strong>网络或服务暂时不可用时保留可能仍有效的凭据；若旧凭据已确认失效，即使匿名创建随后失败也会先从安全存储删除旧值。后续业务请求会自动补建匿名 Session。</div>
+        <div class="callout warning"><strong>删除 App 后不会恢复旧账号凭据。</strong>Android 沙箱和 Keystore 会随卸载清理；iOS 重装首次启动会通过新的安装标记删除仍留在 Keychain 的旧凭据。</div>
       </section>
 
       <section id="recipes" class="section searchable" data-search="recipe 首页 template history upload video image 图生图 task polling style sensitive words delete">
@@ -651,7 +642,11 @@ if (result.isSuccess) {
   final home = await client.loadHomeContent();
   emit(HomeReady(home));
 } on SharedCoreException catch (error) {
-  if (error.isBackendError) {
+  if (error.isRetryable) {
+    scheduleRetry();
+  } else if (error.isAuthenticationError) {
+    emit(LoginGuidanceRequired(error.message));
+  } else if (error.isBackendError) {
     // backendCode 和 message 均来自后端响应。
     emit(HomeBackendFailure(
       code: error.backendCode!,
@@ -675,8 +670,11 @@ if (result.isSuccess) {
           <dt>httpStatus</dt><dd>可以取得 HTTP 状态码时返回；否则为 <code>null</code>。</dd>
           <dt>isBackendError</dt><dd><code>backendCode != null</code> 的便捷判断。</dd>
           <dt>isLocalError</dt><dd><code>localError != null</code> 的便捷判断。</dd>
+          <dt>isRetryable</dt><dd>网络、超时、408、425、429 和 5xx 等瞬时失败为 <code>true</code>。</dd>
+          <dt>isAuthenticationError</dt><dd>SDK 已尝试内部 Session 恢复，但操作仍存在凭据拒绝时为 <code>true</code>。</dd>
         </dl>
-        <div class="callout"><strong>不会同时出现两种来源。</strong>后端返回业务失败时只设置 <code>backendCode</code>；网络中断、超时、参数校验、解析失败、平台能力等问题只设置 <code>localError</code>。没有后端业务包裹的 HTTP 失败归类为 <code>SharedCoreLocalError.http</code>，并尽可能携带 <code>httpStatus</code>。</div>
+        <div class="callout"><strong>不会同时出现两种来源。</strong>后端返回业务失败时只设置 <code>backendCode</code>；网络中断、超时、参数校验、解析失败、平台能力等问题只设置 <code>localError</code>。没有业务 envelope 的 401/403/404/5xx 分别归类为 <code>unauthorized</code>、<code>forbidden</code>、<code>notFound</code>、<code>server</code>，并携带可取得的 <code>httpStatus</code>。</div>
+        <div class="callout warning"><strong>安全存储错误不会被隐藏。</strong>如果一次业务失败同时触发 Session 写入或删除，而 Keychain/Keystore 操作失败，调用者会收到 <code>sessionStorageUnavailable</code>，因为此时凭据状态不能被认为已可靠保存。</div>
         <h3>本地错误枚举</h3>
         <div id="error-codes" class="error-grid"></div>
       </section>
@@ -728,17 +726,12 @@ if (result.isSuccess) {
       { n: "SharedCore.configure", s: "static Future<SharedCoreClient> configure(SharedCoreConfiguration configuration)", d: "自动采集设备信息并配置进程级全局客户端。", p: "configuration", r: "Future<SharedCoreClient>", note: "同配置幂等；不同配置抛出 SharedCoreLocalError.alreadyConfigured。" },
       { n: "SharedCore.instance", s: "static SharedCoreClient get instance", d: "读取已经配置的全局客户端。", p: "无", r: "SharedCoreClient", note: "配置前访问会抛出 SharedCoreLocalError.notConfigured。" },
       { n: "SharedCore.isConfigured", s: "static bool get isConfigured", d: "判断全局客户端是否已经配置成功。", p: "无", r: "bool", note: "适合存在多个启动入口的应用避免重复组织初始化流程。" },
-      { n: "session", s: "Future<SharedCoreSession> session()", d: "读取当前完整 Session。", p: "无", r: "Future<SharedCoreSession>", note: "Android 和 iOS 都会自动持久化；通常只在业务需要完整会话快照时读取。", tag: "高级", kind: "advanced" },
-      { n: "accessToken", s: "Future<String> get accessToken", d: "读取当前 access token。", p: "无", r: "Future<String>", note: "无 Session 时返回空字符串。" },
       { n: "email", s: "Future<String> get email", d: "读取当前账号邮箱。", p: "无", r: "Future<String>", note: "未绑定邮箱时为空。" },
       { n: "hasBindEmail", s: "Future<bool> get hasBindEmail", d: "判断 Session 是否包含非空邮箱。", p: "无", r: "Future<bool>", note: "忽略邮箱首尾空白。" },
-      { n: "setSession", s: "Future<void> setSession({required String accessToken})", d: "导入 accessToken，自动刷新账号并补齐完整 Session。", p: "accessToken", r: "Future<void>", note: "会发起网络请求；成功后 Android 和 iOS 都会自动保存完整 Session。" },
-      { n: "clearSession", s: "Future<void> clearSession()", d: "退出并清空当前 Session。", p: "无", r: "Future<void>", note: "Android 和 iOS 都会同步删除持久化会话。" },
-      { n: "startSession", s: "Future<void> startSession()", d: "为当前设备启动或刷新后端 Session。", p: "无", r: "Future<void>", note: "首次安装通常调用此入口。" },
+      { n: "logout", s: "Future<void> logout()", d: "退出当前账号并自动切换到新的匿名 Session。", p: "无", r: "Future<void>", note: "同步清除旧安全凭据；应用不接触凭据内容。" },
       { n: "refreshAccount", s: "Future<SharedCoreAccountSnapshot> refreshAccount()", d: "刷新账号、积分、会员和运营配置。", p: "无", r: "Future<SharedCoreAccountSnapshot>", note: "成功后同步更新内部 Session。" },
-      { n: "bindEmail", s: "Future<SharedCoreAccountSnapshot> bindEmail({required String email, required String password})", d: "为当前账号绑定邮箱密码。", p: "email、password", r: "Future<SharedCoreAccountSnapshot>", note: "需要有效 Session。" },
-      { n: "updatePassword", s: "Future<SharedCoreAccountSnapshot> updatePassword(String newPassword)", d: "更新当前邮箱账号密码。", p: "newPassword", r: "Future<SharedCoreAccountSnapshot>", note: "当前账号必须已经绑定邮箱。" },
-      { n: "login", s: "Future<SharedCoreAccountSnapshot> login({String? email, String? password, String? threeToken})", d: "使用邮箱密码或第三方 token 登录。", p: "email/password 或 threeToken", r: "Future<SharedCoreAccountSnapshot>", note: "两种模式不要混用；成功后替换 Session。" },
+      { n: "updatePassword", s: "Future<SharedCoreAccountSnapshot> updatePassword(String newPassword)", d: "更新当前邮箱账号密码。", p: "newPassword", r: "Future<SharedCoreAccountSnapshot>", note: "仅用于修改密码；当前账号必须已有邮箱，内部调用新的 changePassword 接口。" },
+      { n: "login", s: "Future<SharedCoreAccountSnapshot> login({String? email, String? password, String? threeToken})", d: "使用邮箱密码或第三方 token 登录或注册。", p: "email/password 或 threeToken", r: "Future<SharedCoreAccountSnapshot>", note: "登录和注册统一使用此入口；两种认证模式不要混用，成功后替换 Session。" },
       { n: "uploadUserDeviceIdentifiers", s: "Future<void> uploadUserDeviceIdentifiers(SharedCoreSingularIdentifiers identifiers)", d: "上传归因和广告设备标识。", p: "identifiers", r: "Future<void>", note: "相关标识统一封装在值对象中。" },
       { n: "exchangeCode", s: "Future<bool> exchangeCode(String code)", d: "提交兑换码并返回兑换是否成功。", p: "code", r: "Future<bool>", note: "响应 JSON 的 code == 200 返回 true，其他业务 code 返回 false；网络或解析错误仍抛出异常。" },
       { n: "loadHomeContent", s: "Future<SharedCoreHomeContent> loadHomeContent()", d: "加载类型化首页菜单和模块。", p: "无", r: "Future<SharedCoreHomeContent>", note: "授权请求。" },
@@ -759,11 +752,10 @@ if (result.isSuccess) {
     ];
 
     const models = [
-      { n: "SharedCoreConfiguration", d: "配置全局客户端时使用的完整运行配置。", f: [["baseUrl", "String", "后端根地址"], ["appId", "String", "应用标识"], ["deviceOverrides", "SharedCoreDeviceOverrides", "可选设备信息覆盖值"], ["signSecret", "String?", "null 使用插件内置默认值；非 null 原样使用"], ["sessionStorageKeyPrefix", "String", "Android/iOS Session 存储键前缀，默认 SharedCore"], ["apiPathMode", "SharedCoreApiPathMode", "builtIn 或 bundleDerived"], ["testServerMode", "bool", "true 时强制使用受保护的内置测试服地址和路径"], ["requestTimeout", "Duration", "单次 API 总超时"], ["jsonNoisePrefix / jsonNoiseFieldCount", "String? / int", "builtIn 原样使用；bundleDerived 时忽略并自动派生前缀、固定数量 20"], ["http", "SharedCoreHttpConfiguration", "网络参数"]] },
+      { n: "SharedCoreConfiguration", d: "配置全局客户端时使用的完整运行配置。", f: [["baseUrl", "String", "后端根地址"], ["appId", "String", "应用标识"], ["deviceOverrides", "SharedCoreDeviceOverrides", "可选设备信息覆盖值"], ["signSecret", "String?", "null 使用插件内置默认值；非 null 原样使用"], ["sessionStorageKeyPrefix", "String", "Android/iOS Session 存储键前缀，默认 SharedCore"], ["apiPathMode", "SharedCoreApiPathMode", "默认 bundleDerived；可显式选择 builtIn"], ["testServerMode", "bool", "true 时强制使用受保护的内置测试服地址和路径"], ["requestTimeout", "Duration", "单次 API 总超时"], ["jsonNoisePrefix / jsonNoiseFieldCount", "String? / int", "builtIn 原样使用；bundleDerived 时忽略并自动派生前缀、固定数量 20"], ["http", "SharedCoreHttpConfiguration", "网络参数"]] },
       { n: "SharedCoreApiPathMode", d: "生产 API 路径选择策略；testServerMode 为 true 时会被覆盖。", f: [["builtIn", "enum", "插件受保护的内置路径"], ["bundleDerived", "enum", "Bundle ID 派生混淆路径和 JSON noise 配置"]] },
       { n: "SharedCoreHttpConfiguration", d: "可选网络传输设置；大多数 App 使用默认值即可。", f: [["connectTimeout", "Duration", "建立连接超时，默认 60 秒"], ["readTimeout", "Duration", "连续读取空闲超时，默认 60 秒"], ["proxyUrl", "String?", "显式 HTTP(S) 代理"], ["userAgent", "String", "默认 User-Agent"], ["maxResponseBodyBytes", "int?", "可选响应体大小上限"]] },
       { n: "SharedCoreDeviceOverrides", d: "可选设备覆盖配置；不传时插件自动采集。", f: [["vpn / hasWeChatOrQQInstalled", "bool?", "非 null 时覆盖自动检测结果"], ["networkOperator / simOperator", "String?", "运营商覆盖值"], ["templateLanguage", "String?", "覆盖自动语言选择"], ["installReferrer", "String?", "业务侧安装来源"]] },
-      { n: "SharedCoreSession", d: "一个客户端当前持有的会话状态。", f: [["accessToken", "String", "有效 Session 的必要字段"], ["userId", "String", "后端用户标识"], ["email", "String", "绑定邮箱"]] },
       { n: "SharedCoreSingularIdentifiers", d: "归因和广告设备标识集合。", f: [["sdid / idfa / idfv", "String", "Singular 与 Apple 标识"], ["aifa / asid / amid", "String", "广告归因标识"], ["oaid / andi", "String", "Android 设备标识"]] },
       { n: "SharedCoreSubmitVideoOptions", d: "视频生成任务参数。", f: [["imagePath", "String", "本地图片路径"], ["prompt", "String", "生成提示词"], ["templateId", "int", "模板标识"], ["extendId", "int", "视频延长来源；SDK 自动转换后端参数"], ["definition / duration / variation", "int", "输出清晰度、时长和变体"]] },
       { n: "SharedCoreImageStyle", d: "图生图任务的类型安全风格枚举；调用方无需填写裸数字 styleId。", f: [["chestModerate / chestBusty", "1 / 2", "Chest — Moderate / Busty"], ["buttCurvy / buttThick", "3 / 4", "Butt — Curvy / Thick"], ["slimWaistTrim / slimWaistSlim", "5 / 6", "Slim Waist — Trim / Slim"], ["absDefineToned / absDefineRipped", "7 / 8", "Abs Define — Toned / Ripped"]] },
@@ -783,11 +775,11 @@ if (result.isSuccess) {
       { n: "SharedCorePurchaseItem", d: "后端商品目录中的单个商品。", f: [["itemId / productId", "int / String", "后端条目标识与商店商品标识"], ["price", "double", "后端配置价格"], ["amount / giftAmount", "int", "积分数量与赠送数量"], ["type / pageType / cycle / isShow", "int", "商品分类与展示配置"], ["subscriptionPeriod", "String", "订阅周期"], ["freeTryDays", "int", "免费试用天数"]] },
       { n: "SharedCorePurchaseCatalog", d: "按产品页面用途归类的商品目录。", f: [["schemaVersion", "int", "目录结构版本"], ["creditPagePurchaseItems", "List<SharedCorePurchaseItem>", "积分购买商品"], ["creditPageSubscribeItems", "List<SharedCorePurchaseItem>", "积分页订阅商品"], ["subscribePage*", "SharedCorePurchaseItem?", "试用、周订阅、年订阅"], ["discountPageDiscountItem", "SharedCorePurchaseItem?", "折扣商品"], ["secretPageSecretItem", "SharedCorePurchaseItem?", "隐藏商品"]] },
       { n: "SharedCorePurchaseVerificationResult", d: "服务端票据验证后的稳定结果。", f: [["isSuccess", "bool", "验证是否成功"], ["isTrial", "bool", "是否试用"], ["status", "String", "归一化状态"]] },
-      { n: "SharedCoreLocalError", d: "插件、本机或平台产生的稳定错误分类枚举。", f: [["network / timeout / http", "enum", "网络与 HTTP 错误"], ["invalidArgument / invalidState", "enum", "调用参数与状态错误"], ["parse / upload / download / cache / task", "enum", "本地处理错误"], ["permissionDenied / unsupportedPlatform / platform", "enum", "平台能力错误"], ["deviceInfoUnavailable / sessionStorageUnavailable", "enum", "原生设备信息与 Session 存储错误"], ["purchaseProductNotFound / paymentVerification", "enum", "购买流程的本地错误"]] },
-      { n: "SharedCoreException", d: "插件公开的统一异常类型；后端与本地来源二选一。", f: [["backendCode", "int?", "后端业务码；本地错误时为 null"], ["localError", "SharedCoreLocalError?", "本地错误类型；后端错误时为 null"], ["message", "String", "后端消息或本机诊断信息"], ["httpStatus", "int?", "可取得的 HTTP 状态码"], ["isBackendError / isLocalError", "bool", "错误来源便捷判断"]] }
+      { n: "SharedCoreLocalError", d: "插件、本机或平台产生的稳定错误分类枚举。", f: [["network / timeout / http", "enum", "网络与通用 HTTP 错误"], ["unauthorized / forbidden / notFound / server", "enum", "明确的 HTTP 失败"], ["invalidArgument / invalidState", "enum", "调用参数与状态错误"], ["parse / upload / download / cache / task", "enum", "本地处理错误"], ["permissionDenied / unsupportedPlatform / platform", "enum", "平台能力错误"], ["deviceInfoUnavailable / sessionStorageUnavailable", "enum", "原生设备信息与 Session 存储错误"], ["purchaseProductNotFound / paymentVerification", "enum", "购买流程的本地错误"]] },
+      { n: "SharedCoreException", d: "插件公开的统一异常类型；后端与本地来源二选一。", f: [["backendCode", "int?", "后端业务码；本地错误时为 null"], ["localError", "SharedCoreLocalError?", "本地错误类型；后端错误时为 null"], ["message", "String", "后端消息或本机诊断信息"], ["httpStatus", "int?", "可取得的 HTTP 状态码"], ["isBackendError / isLocalError", "bool", "错误来源便捷判断"], ["isRetryable", "bool", "是否适合稍后重试"], ["isAuthenticationError", "bool", "是否为恢复后仍存在的认证失败"]] }
     ];
 
-    const errorCodes = ["cancelled", "invalidArgument", "invalidState", "notConfigured", "alreadyConfigured", "network", "timeout", "http", "parse", "paymentVerification", "upload", "download", "cache", "permissionDenied", "task", "unsupportedPlatform", "purchaseProductNotFound", "deviceInfoUnavailable", "sessionStorageUnavailable", "platform", "unknown"];
+    const errorCodes = ["cancelled", "invalidArgument", "invalidState", "notConfigured", "alreadyConfigured", "network", "timeout", "http", "unauthorized", "forbidden", "notFound", "server", "parse", "paymentVerification", "upload", "download", "cache", "permissionDenied", "task", "unsupportedPlatform", "purchaseProductNotFound", "deviceInfoUnavailable", "sessionStorageUnavailable", "platform", "unknown"];
 
     function slug(value) {
       return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");

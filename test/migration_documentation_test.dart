@@ -17,7 +17,8 @@ void main() {
     final cookbook = File('docs/cookbook.html').readAsStringSync();
     const requiredTerms = <String>[
       'SharedCoreDeviceOverrides',
-      'setSession(accessToken:',
+      'SharedCore.configure',
+      'logout()',
       'Future&lt;bool&gt;',
       'submitImageTaskFromImageUrl',
       'submitImageTaskFromImagePath',
@@ -44,5 +45,17 @@ void main() {
     expect(migration, isNot(contains('FRB')));
     expect(cookbook, isNot(contains('Rust')));
     expect(cookbook, isNot(contains('FRB')));
+  });
+
+  test('public Dart API does not expose session credentials', () {
+    final client = File('lib/src/client.dart').readAsStringSync();
+    final configuration = File('lib/src/configuration.dart').readAsStringSync();
+
+    expect(client, isNot(contains('Future<String> get accessToken')));
+    expect(client, isNot(contains('Future<void> setSession')));
+    expect(client, isNot(contains('Future<void> startSession')));
+    expect(client, isNot(contains('Future<void> clearSession')));
+    expect(configuration, isNot(contains('class SharedCoreSession')));
+    expect(client, contains('Future<void> logout()'));
   });
 }

@@ -29,13 +29,25 @@ public final class SharedcoreFlutterPlugin: NSObject, FlutterPlugin {
             let appId = arguments["appId"] as? String ?? ""
             result(collectDeviceInfo(appId: appId))
         case "loadSession":
-            result(loadSession(prefix: sessionPrefix(arguments)))
+            do {
+                result(try loadSession(prefix: sessionPrefix(arguments)))
+            } catch {
+                result(sessionStoreFailure(error))
+            }
         case "saveSession":
-            saveSession(arguments, prefix: sessionPrefix(arguments))
-            result(nil)
+            do {
+                try saveSession(arguments, prefix: sessionPrefix(arguments))
+                result(nil)
+            } catch {
+                result(sessionStoreFailure(error))
+            }
         case "clearSession":
-            clearSession(prefix: sessionPrefix(arguments))
-            result(nil)
+            do {
+                try clearSession(prefix: sessionPrefix(arguments))
+                result(nil)
+            } catch {
+                result(sessionStoreFailure(error))
+            }
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -109,10 +121,11 @@ public final class SharedcoreFlutterPlugin: NSObject, FlutterPlugin {
         arguments["prefix"] as? String ?? "SharedCore"
     }
 
-    private func loadSession(prefix: String) -> [String: String]? {
+    private func loadSession(prefix: String) throws -> [String: String]? {
+        try prepareSecureSessionStore(prefix: prefix)
         let defaults = UserDefaults.standard
-        let accessToken = defaults.string(forKey: prefix + "AccessToken") ?? ""
-        guard !accessToken.isEmpty else { return nil }
+        guard let accessToken = try readAccessToken(prefix: prefix),
+              !accessToken.isEmpty else { return nil }
         return [
             "accessToken": accessToken,
             "userId": defaults.string(forKey: prefix + "UserId") ?? "",
@@ -120,23 +133,111 @@ public final class SharedcoreFlutterPlugin: NSObject, FlutterPlugin {
         ]
     }
 
-    private func saveSession(_ arguments: [String: Any], prefix: String) {
+    private func saveSession(_ arguments: [String: Any], prefix: String) throws {
         let accessToken = arguments["accessToken"] as? String ?? ""
         guard !accessToken.isEmpty else {
-            clearSession(prefix: prefix)
+            try clearSession(prefix: prefix)
             return
         }
+        try prepareSecureSessionStore(prefix: prefix)
+        try writeAccessToken(accessToken, prefix: prefix)
         let defaults = UserDefaults.standard
-        defaults.set(accessToken, forKey: prefix + "AccessToken")
+        defaults.removeObject(forKey: prefix + "AccessToken")
         defaults.set(arguments["userId"] as? String ?? "", forKey: prefix + "UserId")
         defaults.set(arguments["email"] as? String ?? "", forKey: prefix + "Email")
     }
 
-    private func clearSession(prefix: String) {
+    private func clearSession(prefix: String) throws {
+        try deleteAccessToken(prefix: prefix)
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: prefix + "AccessToken")
         defaults.removeObject(forKey: prefix + "UserId")
         defaults.removeObject(forKey: prefix + "Email")
+    }
+
+    private func prepareSecureSessionStore(prefix: String) throws {
+        let defaults = UserDefaults.standard
+        let markerKey = prefix + "SecureSessionInstallationMarker"
+        let legacyKey = prefix + "AccessToken"
+        if defaults.bool(forKey: markerKey) {
+            // Finish cleanup if a previous migration stopped after committing
+            // its installation marker.
+            defaults.removeObject(forKey: legacyKey)
+            return
+        }
+
+        let legacyToken = defaults.string(forKey: legacyKey) ?? ""
+        if legacyToken.isEmpty {
+            // Keychain data can survive uninstall. A missing sandbox marker means
+            // this is a fresh installation, so an old credential must not return.
+            try deleteAccessToken(prefix: prefix)
+        } else {
+            try writeAccessToken(legacyToken, prefix: prefix)
+        }
+        defaults.set(true, forKey: markerKey)
+        defaults.removeObject(forKey: legacyKey)
+    }
+
+    private func readAccessToken(prefix: String) throws -> String? {
+        var query = keychainQuery(prefix: prefix)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else { throw SessionStoreError.keychain(status) }
+        guard let data = result as? Data else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    private func writeAccessToken(_ accessToken: String, prefix: String) throws {
+        let query = keychainQuery(prefix: prefix)
+        let value = Data(accessToken.utf8)
+        let status = SecItemUpdate(
+            query as CFDictionary,
+            [kSecValueData as String: value] as CFDictionary
+        )
+        if status == errSecItemNotFound {
+            var insertion = query
+            insertion[kSecValueData as String] = value
+            insertion[kSecAttrAccessible as String] =
+                kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            let addStatus = SecItemAdd(insertion as CFDictionary, nil)
+            guard addStatus == errSecSuccess else {
+                throw SessionStoreError.keychain(addStatus)
+            }
+            return
+        }
+        guard status == errSecSuccess else { throw SessionStoreError.keychain(status) }
+    }
+
+    private func deleteAccessToken(prefix: String) throws {
+        let status = SecItemDelete(keychainQuery(prefix: prefix) as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw SessionStoreError.keychain(status)
+        }
+    }
+
+    private func keychainQuery(prefix: String) -> [String: Any] {
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String:
+                (Bundle.main.bundleIdentifier ?? "SharedCore") + ".sharedcore.session",
+            kSecAttrAccount as String: prefix + ".accessToken",
+            kSecAttrSynchronizable as String: false,
+        ]
+    }
+
+    private func sessionStoreFailure(_ error: Error) -> FlutterError {
+        FlutterError(
+            code: "session_storage_unavailable",
+            message: "Unable to access the secure SharedCore session store: \(error)",
+            details: nil
+        )
+    }
+
+    private enum SessionStoreError: Error {
+        case keychain(OSStatus)
     }
 
     private func currentCarriers() -> (network: String, sim: String) {

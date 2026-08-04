@@ -23,12 +23,29 @@ void main() {
     const error = SharedCoreException(
       localError: SharedCoreLocalError.network,
       message: 'offline',
+      isRetryable: true,
     );
 
     expect(error.localError, SharedCoreLocalError.network);
     expect(error.backendCode, isNull);
     expect(error.isLocalError, isTrue);
+    expect(error.isRetryable, isTrue);
+    expect(error.isAuthenticationError, isFalse);
   });
+
+  test(
+    'exception identifies authentication failures without exposing tokens',
+    () {
+      const error = SharedCoreException(
+        backendCode: 510,
+        message: 'credential expired',
+        httpStatus: 200,
+      );
+
+      expect(error.isAuthenticationError, isTrue);
+      expect(error.isRetryable, isFalse);
+    },
+  );
 
   test('semantic client surface compiles', () {
     expect(_compileAgainstSemanticClientSurface, isA<Function>());
@@ -45,10 +62,7 @@ void main() {
 Future<void> _compileAgainstSemanticClientSurface(
   SharedCoreClient client,
 ) async {
-  await client.setSession(accessToken: 'token');
-  await client.clearSession();
-  await client.startSession();
-  await client.bindEmail(email: 'person@example.test', password: 'secret');
+  await client.logout();
   await client.updatePassword('next-secret');
   await client.login(email: 'person@example.test', password: 'secret');
   await client.login(threeToken: 'third-party-token');

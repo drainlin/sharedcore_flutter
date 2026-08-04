@@ -2,7 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sharedcore_flutter/sharedcore_flutter.dart';
 import 'package:sharedcore_flutter/src/device_info_collector.dart';
-import 'package:sharedcore_flutter/src/platform_session_store.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -53,12 +52,14 @@ void main() {
     const error = SharedCoreException(
       localError: SharedCoreLocalError.network,
       message: 'offline',
+      isRetryable: true,
     );
 
     expect(error.toString(), contains('network'));
     expect(error.backendCode, isNull);
     expect(error.isLocalError, isTrue);
     expect(error.isBackendError, isFalse);
+    expect(error.isRetryable, isTrue);
   });
 
   test('exception exposes backend code and message without a local error', () {
@@ -197,67 +198,16 @@ void main() {
   });
 
   test('configuration keeps the explicit API path mode', () {
-    const builtInPaths = SharedCoreConfiguration(appId: 'app-id');
-    const bundleDerivedPaths = SharedCoreConfiguration(
+    const bundleDerivedPaths = SharedCoreConfiguration(appId: 'app-id');
+    const builtInPaths = SharedCoreConfiguration(
       appId: 'app-id',
-      apiPathMode: SharedCoreApiPathMode.bundleDerived,
+      apiPathMode: SharedCoreApiPathMode.builtIn,
     );
 
-    expect(builtInPaths.apiPathMode, SharedCoreApiPathMode.builtIn);
     expect(bundleDerivedPaths.apiPathMode, SharedCoreApiPathMode.bundleDerived);
+    expect(builtInPaths.apiPathMode, SharedCoreApiPathMode.builtIn);
     expect(builtInPaths, isNot(bundleDerivedPaths));
   });
-
-  test(
-    'platform session persistence forwards the configured key prefix',
-    () async {
-      const channel = MethodChannel('sharedcore_flutter/device_info');
-      final calls = <MethodCall>[];
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(channel, (call) async {
-            calls.add(call);
-            if (call.method == 'loadSession') {
-              return <String, Object?>{
-                'accessToken': 'saved-token',
-                'userId': '42',
-                'email': 'saved@example.test',
-              };
-            }
-            return null;
-          });
-      addTearDown(
-        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(channel, null),
-      );
-
-      final restored = await loadSharedCorePlatformSession('Product');
-      await saveSharedCorePlatformSession(
-        'Product',
-        const SharedCoreSession(
-          accessToken: 'next-token',
-          userId: '84',
-          email: 'next@example.test',
-        ),
-      );
-      await clearSharedCorePlatformSession('Product');
-
-      expect(restored?.accessToken, 'saved-token');
-      expect(restored?.userId, '42');
-      expect(restored?.email, 'saved@example.test');
-      expect(calls.map((call) => call.method), <String>[
-        'loadSession',
-        'saveSession',
-        'clearSession',
-      ]);
-      expect(calls.first.arguments, <String, Object?>{'prefix': 'Product'});
-      expect(calls[1].arguments, <String, Object?>{
-        'prefix': 'Product',
-        'accessToken': 'next-token',
-        'userId': '84',
-        'email': 'next@example.test',
-      });
-    },
-  );
 
   test('global client reports not configured before configure', () {
     SharedCore.resetForTesting();

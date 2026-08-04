@@ -234,7 +234,7 @@ class SharedCoreConfiguration {
     this.deviceOverrides = const SharedCoreDeviceOverrides(),
     this.signSecret,
     this.sessionStorageKeyPrefix = 'SharedCore',
-    this.apiPathMode = SharedCoreApiPathMode.builtIn,
+    this.apiPathMode = SharedCoreApiPathMode.bundleDerived,
     this.testServerMode = false,
     this.requestTimeout = const Duration(seconds: 60),
     this.jsonNoisePrefix,
@@ -256,12 +256,14 @@ class SharedCoreConfiguration {
 
   /// Prefix used by Android and iOS to isolate the persisted session.
   ///
-  /// On iOS, the default preserves the original plugin's UserDefaults keys.
+  /// Credentials are stored in Android Keystore-backed encrypted storage and
+  /// iOS Keychain. The default also discovers legacy plugin-owned values.
   final String sessionStorageKeyPrefix;
 
   /// Selects the production API path strategy.
   ///
-  /// Bundle-derived mode also derives the JSON noise prefix and fixes its count at 20.
+  /// Defaults to bundle-derived mode, which also derives the JSON noise prefix
+  /// and fixes its count at 20.
   /// [testServerMode] overrides this value and always uses built-in real paths.
   final SharedCoreApiPathMode apiPathMode;
 
@@ -318,25 +320,6 @@ class SharedCoreConfiguration {
     jsonNoiseFieldCount,
     http,
   ]);
-}
-
-/// Session state held by one Rust client.
-class SharedCoreSession {
-  /// Creates explicit session state.
-  const SharedCoreSession({
-    required this.accessToken,
-    this.userId = '',
-    this.email = '',
-  });
-
-  /// Backend access token.
-  final String accessToken;
-
-  /// Backend user identifier.
-  final String userId;
-
-  /// Email associated with the current account.
-  final String email;
 }
 
 /// Singular attribution identifiers uploaded for an authenticated user.

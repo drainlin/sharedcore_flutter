@@ -15,11 +15,7 @@ Future<String> coreVersion() =>
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustSharedCoreClient>>
 abstract class RustSharedCoreClient implements RustOpaqueInterface {
-  Future<String> accessToken();
-
-  Future<String> bindEmail({required String email, required String password});
-
-  Future<void> clearSession();
+  Future<String> bootstrap({String? accessToken});
 
   /// Creates the Rust client and its reqwest/rustls transport.
   static Future<RustSharedCoreClient> create({
@@ -66,15 +62,13 @@ abstract class RustSharedCoreClient implements RustOpaqueInterface {
 
   Future<String> login({String? email, String? password, String? threeToken});
 
+  Future<String> logout();
+
   Future<String> refreshAccount();
 
-  Future<BridgeSession> session();
+  Future<BridgeSession> sessionForPersistence();
 
   Future<void> setDevice({required BridgeDeviceInfo device});
-
-  Future<void> setSession({required BridgeSession session});
-
-  Future<void> startSession();
 
   Future<String> submitVideoTask({required BridgeSubmitVideoOptions options});
 
@@ -271,12 +265,14 @@ class BridgeError implements FrbException {
   final String message;
   final int? httpStatus;
   final int? backendCode;
+  final bool retryable;
 
   const BridgeError({
     required this.code,
     required this.message,
     this.httpStatus,
     this.backendCode,
+    required this.retryable,
   });
 
   @override
@@ -284,7 +280,8 @@ class BridgeError implements FrbException {
       code.hashCode ^
       message.hashCode ^
       httpStatus.hashCode ^
-      backendCode.hashCode;
+      backendCode.hashCode ^
+      retryable.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -294,7 +291,8 @@ class BridgeError implements FrbException {
           code == other.code &&
           message == other.message &&
           httpStatus == other.httpStatus &&
-          backendCode == other.backendCode;
+          backendCode == other.backendCode &&
+          retryable == other.retryable;
 }
 
 /// Stable error code mirrored from `shared_core::ErrorCode`.

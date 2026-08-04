@@ -24,6 +24,18 @@ enum SharedCoreLocalError {
   /// An HTTP response failed without a backend business error envelope.
   http,
 
+  /// The backend rejected the current credential with HTTP 401.
+  unauthorized,
+
+  /// The backend refused the operation with HTTP 403.
+  forbidden,
+
+  /// The requested backend resource was not found.
+  notFound,
+
+  /// The backend returned a server-side HTTP failure.
+  server,
+
   /// Data could not be encoded or decoded.
   parse,
 
@@ -75,6 +87,7 @@ class SharedCoreException implements Exception {
     this.backendCode,
     this.localError,
     this.httpStatus,
+    this.isRetryable = false,
   }) : assert(
          (backendCode == null) != (localError == null),
          'Exactly one of backendCode and localError must be provided',
@@ -92,11 +105,24 @@ class SharedCoreException implements Exception {
   /// HTTP status when one was available.
   final int? httpStatus;
 
+  /// Whether retrying later can reasonably succeed without changing input.
+  final bool isRetryable;
+
   /// Whether this failure was returned by the backend business envelope.
   bool get isBackendError => backendCode != null;
 
   /// Whether this failure was produced locally by the SDK or platform.
   bool get isLocalError => localError != null;
+
+  /// Whether this error represents a rejected or expired credential.
+  bool get isAuthenticationError =>
+      localError == SharedCoreLocalError.unauthorized ||
+      localError == SharedCoreLocalError.forbidden ||
+      httpStatus == 401 ||
+      httpStatus == 403 ||
+      backendCode == 401 ||
+      backendCode == 403 ||
+      backendCode == 510;
 
   @override
   String toString() {
@@ -104,6 +130,6 @@ class SharedCoreException implements Exception {
         ? 'backendCode: $backendCode'
         : 'localError: ${localError!.name}';
     final status = httpStatus == null ? '' : ', httpStatus: $httpStatus';
-    return 'SharedCoreException($source$status, message: $message)';
+    return 'SharedCoreException($source$status, retryable: $isRetryable, message: $message)';
   }
 }
