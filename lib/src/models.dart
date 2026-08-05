@@ -21,16 +21,16 @@ class SharedCoreCreditBalance {
 class SharedCoreReplacementApp {
   /// Creates a backend-controlled replacement application configuration.
   const SharedCoreReplacementApp({
-    required this.downloadURLString,
-    required this.webURLString,
+    required this.downloadUrlString,
+    required this.webUrlString,
     required this.isEnabled,
   });
 
   /// Download URL supplied by the backend.
-  final String downloadURLString;
+  final String downloadUrlString;
 
   /// Web fallback URL supplied by the backend.
-  final String webURLString;
+  final String webUrlString;
 
   /// Whether the backend explicitly enabled the replacement application.
   final bool isEnabled;
@@ -38,8 +38,8 @@ class SharedCoreReplacementApp {
   /// Decodes a replacement application returned by the Rust core.
   factory SharedCoreReplacementApp.fromMap(Map<String, Object?> map) {
     return SharedCoreReplacementApp(
-      downloadURLString: _string(map['downloadURLString']),
-      webURLString: _string(map['webURLString']),
+      downloadUrlString: _string(map['downloadUrlString']),
+      webUrlString: _string(map['webUrlString']),
       isEnabled: _bool(map['isEnabled']),
     );
   }
@@ -65,8 +65,8 @@ class SharedCoreAccountSnapshot {
     this.subscriptionExpirationTime,
     required this.subscriptionPlan,
     this.nextRefreshTime,
-    required this.purchaseVideoURLString,
-    required this.activeURLString,
+    required this.purchaseVideoUrlString,
+    required this.activeUrlString,
     required this.contactUs,
     required this.isNewDevice,
     required this.replacementApp,
@@ -90,8 +90,8 @@ class SharedCoreAccountSnapshot {
   final int? subscriptionExpirationTime;
   final String subscriptionPlan;
   final int? nextRefreshTime;
-  final String purchaseVideoURLString;
-  final String activeURLString;
+  final String purchaseVideoUrlString;
+  final String activeUrlString;
   final String contactUs;
   final bool isNewDevice;
   final SharedCoreReplacementApp replacementApp;
@@ -120,8 +120,8 @@ class SharedCoreAccountSnapshot {
       ),
       subscriptionPlan: _string(map['subscriptionPlan']),
       nextRefreshTime: _nullableInt(map['nextRefreshTime']),
-      purchaseVideoURLString: _string(map['purchaseVideoURLString']),
-      activeURLString: _string(map['activeURLString']),
+      purchaseVideoUrlString: _string(map['purchaseVideoUrlString']),
+      activeUrlString: _string(map['activeUrlString']),
       contactUs: _string(map['contactUs']),
       isNewDevice: _bool(map['isNewDevice']),
       replacementApp: SharedCoreReplacementApp.fromMap(

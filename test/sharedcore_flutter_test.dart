@@ -36,6 +36,25 @@ void main() {
     expect(account.isPro, isTrue);
   });
 
+  test('url fields decode the lowercase-url keys emitted by the Rust core',
+      () {
+    final account = SharedCoreAccountSnapshot.fromMap(<String, Object?>{
+      'purchaseVideoUrlString': 'https://purchase-video',
+      'activeUrlString': 'https://active',
+      'replacementApp': <String, Object?>{
+        'downloadUrlString': 'https://download',
+        'webUrlString': 'https://web',
+        'isEnabled': true,
+      },
+    });
+
+    expect(account.purchaseVideoUrlString, 'https://purchase-video');
+    expect(account.activeUrlString, 'https://active');
+    expect(account.replacementApp.downloadUrlString, 'https://download');
+    expect(account.replacementApp.webUrlString, 'https://web');
+    expect(account.replacementApp.isEnabled, isTrue);
+  });
+
   test('history model keeps record and task identifiers separate', () {
     final history = SharedCoreHistoryItem.fromMap(<String, Object?>{
       'type': 'video',

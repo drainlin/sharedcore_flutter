@@ -761,7 +761,7 @@ if (result.isSuccess) {
       { n: "SharedCoreImageStyle", d: "图生图任务的类型安全风格枚举；调用方无需填写裸数字 styleId。", f: [["chestModerate / chestBusty", "1 / 2", "Chest — Moderate / Busty"], ["buttCurvy / buttThick", "3 / 4", "Butt — Curvy / Thick"], ["slimWaistTrim / slimWaistSlim", "5 / 6", "Slim Waist — Trim / Slim"], ["absDefineToned / absDefineRipped", "7 / 8", "Abs Define — Toned / Ripped"]] },
       { n: "SharedCoreAccountSnapshot", d: "账号、积分、会员和运营信息的统一快照。", f: [["userId / email", "String", "身份信息"], ["credits", "SharedCoreCreditBalance", "积分结构"], ["membership / isPro / wasPro", "String / bool", "会员状态"], ["freeCredits / paidCredits / totalCredits", "int", "便捷积分字段"], ["subscription*", "多个字段", "订阅状态、计划和到期时间"], ["replacementApp", "SharedCoreReplacementApp", "替代应用配置"]] },
       { n: "SharedCoreCreditBalance", d: "账号积分余额。", f: [["free", "int", "免费积分"], ["paid", "int", "付费积分"], ["total", "int", "总积分"]] },
-      { n: "SharedCoreReplacementApp", d: "后端下发的替代应用配置。", f: [["downloadURLString", "String", "下载地址"], ["webURLString", "String", "网页地址"], ["isEnabled", "bool", "读取后端 enabled/newAppEnabled；缺失或无法解析时为 false"]] },
+      { n: "SharedCoreReplacementApp", d: "后端下发的替代应用配置。", f: [["downloadUrlString", "String", "下载地址"], ["webUrlString", "String", "网页地址"], ["isEnabled", "bool", "读取后端 enabled/newAppEnabled；缺失或无法解析时为 false"]] },
       { n: "SharedCoreHomeContent", d: "类型化首页结构。", f: [["menuList", "List<SharedCoreHomeMenu>", "首页菜单"], ["menuModuleMap", "Map<String, List<SharedCoreHomeModule>>", "菜单到模块的映射"]] },
       { n: "SharedCoreHomeMenu", d: "首页菜单条目。", f: [["title", "String", "菜单标题，也是模块映射键"]] },
       { n: "SharedCoreHomeModule", d: "首页菜单下的业务模块。", f: [["title", "String", "模块标题"], ["moduleName", "String", "模块名称"], ["paramIds", "List<int>", "模块关联参数标识"]] },

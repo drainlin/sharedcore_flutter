@@ -1,3 +1,12 @@
+## 0.3.3
+
+- Fixed replacement-app and account URL fields decoding the lowercase-url JSON
+  keys emitted by the Rust core. Renamed `downloadURLString` →
+  `downloadUrlString`, `webURLString` → `webUrlString`,
+  `purchaseVideoURLString` → `purchaseVideoUrlString`, and `activeURLString` →
+  `activeUrlString`; these fields previously always decoded to empty strings.
+- Added Rust and Flutter contract tests that lock the serialized URL key names.
+
 ## 0.3.2
 
 - Added the iOS privacy manifest for app-only `UserDefaults` and native file
