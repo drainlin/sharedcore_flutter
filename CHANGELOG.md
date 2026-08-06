@@ -1,3 +1,12 @@
+## 0.3.4
+
+- Fixed iOS release/IPA builds losing the Rust entry symbols. The podspec now
+  applies `STRIP_STYLE = non-global` to consuming app targets so the archive
+  strip step keeps `frb_get_rust_content_hash` and the linker-retention
+  symbols exported. Without this, `flutter build ipa` stripped the export
+  trie and apps crashed on launch with
+  `Failed to lookup symbol 'frb_get_rust_content_hash'`.
+
 ## 0.3.3
 
 - Fixed replacement-app and account URL fields decoding the lowercase-url JSON

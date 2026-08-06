@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'sharedcore_flutter'
-  s.version          = '0.3.3'
+  s.version          = '0.3.4'
   s.summary          = 'Binary Flutter bindings for SharedCore Rust.'
   s.description      = <<-DESC
 Binary Flutter bindings for SharedCore Rust.
@@ -35,6 +35,7 @@ Binary Flutter bindings for SharedCore Rust.
   s.user_target_xcconfig = {
     'DEAD_CODE_STRIPPING' => 'YES',
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386 x86_64',
+    'STRIP_STYLE' => 'non-global',
     'OTHER_LDFLAGS[sdk=iphoneos*]' => '$(inherited) -Wl,-u,_sharedcore_flutter_retain_symbols',
     'OTHER_LDFLAGS[sdk=iphonesimulator*]' => '$(inherited) -Wl,-u,_sharedcore_flutter_retain_symbols'
   }
