@@ -1,4 +1,3 @@
-import CoreTelephony
 import Darwin
 import Flutter
 import Security
@@ -59,7 +58,6 @@ public final class SharedcoreFlutterPlugin: NSObject, FlutterPlugin {
         let templateLanguage = (Locale.current as NSLocale).object(
             forKey: .languageCode
         ) as? String ?? ""
-        let carriers = currentCarriers()
 
         return [
             "appId": appId,
@@ -78,8 +76,6 @@ public final class SharedcoreFlutterPlugin: NSObject, FlutterPlugin {
             "inputLanguage": templateLanguage,
             "vpn": isVpnActive(),
             "hasWxOrQq": hasWxOrQq(),
-            "networkOperator": carriers.network,
-            "simOperator": carriers.sim,
             "installReferrer": "",
         ]
     }
@@ -238,14 +234,6 @@ public final class SharedcoreFlutterPlugin: NSObject, FlutterPlugin {
 
     private enum SessionStoreError: Error {
         case keychain(OSStatus)
-    }
-
-    private func currentCarriers() -> (network: String, sim: String) {
-        let info = CTTelephonyNetworkInfo()
-        let carrier = info.serviceSubscriberCellularProviders?
-            .values
-            .first(where: { $0.carrierName?.isEmpty == false })
-        return (carrier?.carrierName ?? "", carrier?.mobileNetworkCode ?? "")
     }
 
     private func hasWxOrQq() -> Bool {

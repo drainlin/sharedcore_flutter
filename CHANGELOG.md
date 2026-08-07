@@ -1,3 +1,10 @@
+## 0.3.5
+
+- Android device metadata now reports carrier MCC/MNC codes
+  (`networkOperator` / `simOperator`) instead of carrier names.
+- iOS no longer collects carrier operator information; `networkOperator` and
+  `simOperator` are left empty in the reported device payload.
+
 ## 0.3.4
 
 - Fixed iOS release/IPA builds losing the Rust entry symbols. The podspec now

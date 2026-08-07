@@ -241,10 +241,10 @@ class SharedcoreFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, 
             "hasWxOrQq" to (isPackageInstalled(WECHAT_PACKAGE) ||
                 isPackageInstalled(QQ_PACKAGE)),
             "networkOperator" to runCatching {
-                telephonyManager?.networkOperatorName.orEmpty()
+                telephonyManager?.networkOperator.orEmpty()
             }.getOrDefault(""),
             "simOperator" to runCatching {
-                telephonyManager?.simOperatorName.orEmpty()
+                telephonyManager?.simOperator.orEmpty()
             }.getOrDefault(""),
             "installReferrer" to "",
         )

@@ -1,16 +1,22 @@
 PODS:
   - Flutter (1.0.0)
+  - sharedcore_flutter (0.3.4):
+    - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
+  - sharedcore_flutter (from `.symlinks/plugins/sharedcore_flutter/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  sharedcore_flutter:
+    :path: ".symlinks/plugins/sharedcore_flutter/ios"
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  sharedcore_flutter: 8f66cb2d9bfa0537479b2af4aeea6c98a60ce256
 
 PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0
