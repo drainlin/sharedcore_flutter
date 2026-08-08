@@ -345,10 +345,10 @@ class SharedCoreSingularIdentifiers {
   /// Apple vendor identifier.
   final String idfv;
 
-  /// Android advertising identifier.
+  /// Google Advertising ID on Android (GAID, also called AIFA or AAID).
   final String aifa;
 
-  /// Singular attribution identifier.
+  /// Android App Set ID.
   final String asid;
 
   /// Amazon advertising identifier.
