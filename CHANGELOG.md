@@ -1,4 +1,4 @@
-## Unreleased
+## 0.3.6
 
 - Replaced account membership, role, subscription-state, history-type, and
   generation-state scalar values with semantic enums.
