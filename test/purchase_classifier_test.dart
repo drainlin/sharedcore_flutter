@@ -12,7 +12,7 @@ void main() {
     type: 0,
     pageType: 0,
     cycle: 0,
-    isShow: 1,
+    isShow: true,
     subscriptionPeriod: '',
     freeTryDays: 0,
   );
@@ -25,7 +25,7 @@ void main() {
     type: 0,
     pageType: 0,
     cycle: 1,
-    isShow: 1,
+    isShow: true,
     subscriptionPeriod: 'P1M',
     freeTryDays: 0,
   );

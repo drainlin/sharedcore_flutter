@@ -376,7 +376,7 @@ class SharedCoreClient {
     int duration = 0,
     int variation = 0,
   }) {
-    if (source.type != 'video') {
+    if (source.type != SharedCoreHistoryItemType.video) {
       throw const SharedCoreException(
         localError: SharedCoreLocalError.invalidArgument,
         message: 'Only video history items can be extended',

@@ -45,6 +45,18 @@ class SharedCoreReplacementApp {
   }
 }
 
+enum SharedCoreMembershipStatus { unknown, neverSubscribed, active, inactive }
+
+enum SharedCoreAccountRole { unknown, standard, review }
+
+enum SharedCoreSubscriptionStatus {
+  unknown,
+  neverSubscribed,
+  active,
+  cancelled,
+  expired,
+}
+
 class SharedCoreAccountSnapshot {
   const SharedCoreAccountSnapshot({
     required this.userId,
@@ -60,8 +72,8 @@ class SharedCoreAccountSnapshot {
     required this.hasContactUs,
     required this.shouldShowContactUs,
     required this.isUnderReview,
-    this.role,
-    this.subscribeState,
+    this.role = SharedCoreAccountRole.unknown,
+    this.subscribeState = SharedCoreSubscriptionStatus.unknown,
     this.subscriptionExpirationTime,
     required this.subscriptionPlan,
     this.nextRefreshTime,
@@ -75,7 +87,7 @@ class SharedCoreAccountSnapshot {
   final String userId;
   final String email;
   final SharedCoreCreditBalance credits;
-  final String membership;
+  final SharedCoreMembershipStatus membership;
   final bool isPro;
   final bool wasPro;
   final int freeCredits;
@@ -85,8 +97,8 @@ class SharedCoreAccountSnapshot {
   final bool hasContactUs;
   final bool shouldShowContactUs;
   final bool isUnderReview;
-  final int? role;
-  final int? subscribeState;
+  final SharedCoreAccountRole role;
+  final SharedCoreSubscriptionStatus subscribeState;
   final int? subscriptionExpirationTime;
   final String subscriptionPlan;
   final int? nextRefreshTime;
@@ -103,7 +115,7 @@ class SharedCoreAccountSnapshot {
       userId: _string(map['userId']),
       email: _string(map['email']),
       credits: SharedCoreCreditBalance.fromMap(_map(map['credits'])),
-      membership: _string(map['membership']),
+      membership: _membershipStatus(map['membership']),
       isPro: _bool(map['isPro']),
       wasPro: _bool(map['wasPro']),
       freeCredits: _int(map['freeCredits']),
@@ -113,8 +125,8 @@ class SharedCoreAccountSnapshot {
       hasContactUs: _bool(map['hasContactUs']),
       shouldShowContactUs: _bool(map['shouldShowContactUs']),
       isUnderReview: _bool(map['isUnderReview']),
-      role: _nullableInt(map['role']),
-      subscribeState: _nullableInt(map['subscribeState']),
+      role: _accountRole(map['role']),
+      subscribeState: _subscriptionStatus(map['subscribeState']),
       subscriptionExpirationTime: _nullableInt(
         map['subscriptionExpirationTime'],
       ),
@@ -224,6 +236,8 @@ class SharedCoreTemplateItem {
   }
 }
 
+enum SharedCoreHistoryItemType { unknown, image, video }
+
 class SharedCoreHistoryItem {
   const SharedCoreHistoryItem({
     required this.type,
@@ -233,13 +247,13 @@ class SharedCoreHistoryItem {
     required this.coveringUrl,
     required this.originUrl,
     required this.reason,
-    required this.stateCode,
+    required this.status,
     required this.createdAt,
     required this.styleId,
     this.canExtend,
   });
 
-  final String type;
+  final SharedCoreHistoryItemType type;
 
   /// Backend history-record identifier used by deletion APIs.
   final int recordId;
@@ -251,21 +265,21 @@ class SharedCoreHistoryItem {
   final String coveringUrl;
   final String originUrl;
   final String reason;
-  final int stateCode;
+  final SharedCoreTaskStatus status;
   final int createdAt;
   final int styleId;
   final bool? canExtend;
 
   factory SharedCoreHistoryItem.fromMap(Map<String, Object?> map) {
     return SharedCoreHistoryItem(
-      type: _string(map['type']),
+      type: _historyItemType(map['type']),
       recordId: _int(map['recordId']),
       extendId: _int(map['extendId']),
       title: _string(map['title']),
       coveringUrl: _string(map['coveringUrl']),
       originUrl: _string(map['originUrl']),
       reason: _string(map['reason']),
-      stateCode: _int(map['stateCode']),
+      status: _taskStatus(map['status'] ?? map['stateCode']),
       createdAt: _int(map['createdAt']),
       styleId: _int(map['styleId']),
       canExtend: _nullableBool(map['canExtend']),
@@ -278,25 +292,20 @@ enum SharedCoreTaskStatus { unknown, queued, running, succeeded, failed }
 class SharedCoreTaskInfo {
   const SharedCoreTaskInfo({
     required this.promptId,
-    required this.stateCode,
     required this.status,
     required this.ids,
     required this.originUrls,
   });
 
   final String promptId;
-  final int stateCode;
   final SharedCoreTaskStatus status;
   final List<int> ids;
   final List<String> originUrls;
 
   factory SharedCoreTaskInfo.fromMap(Map<String, Object?> map) {
-    final rawStateCode = map['stateCode'];
-    final stateCode = _int(rawStateCode);
     return SharedCoreTaskInfo(
       promptId: _string(map['promptId']),
-      stateCode: stateCode,
-      status: _taskStatus(map['status'], rawStateCode),
+      status: _taskStatus(map['status'] ?? map['stateCode']),
       ids: _intList(map['ids']),
       originUrls: _stringList(map['originUrls']),
     );
@@ -358,7 +367,7 @@ class SharedCorePurchaseItem {
   final int type;
   final int pageType;
   final int cycle;
-  final int isShow;
+  final bool isShow;
   final String subscriptionPeriod;
   final int freeTryDays;
 
@@ -372,7 +381,7 @@ class SharedCorePurchaseItem {
       type: _int(map['type']),
       pageType: _int(map['pageType']),
       cycle: _int(map['cycle']),
-      isShow: _int(map['isShow']),
+      isShow: _nullableBool(map['isShow']) ?? false,
       subscriptionPeriod: _string(map['subscriptionPeriod']),
       freeTryDays: _int(map['freeTryDays']),
     );
@@ -523,7 +532,7 @@ bool? _nullableBool(Object? value) {
   return null;
 }
 
-SharedCoreTaskStatus _taskStatus(Object? value, Object? stateCode) {
+SharedCoreTaskStatus _taskStatus(Object? value) {
   if (value is String) {
     switch (value.toLowerCase().replaceAll('-', '_')) {
       case 'queued':
@@ -553,27 +562,76 @@ SharedCoreTaskStatus _taskStatus(Object? value, Object? stateCode) {
         return SharedCoreTaskStatus.failed;
     }
   }
-  final code = value is num
-      ? value.toInt()
-      : stateCode is num
-      ? stateCode.toInt()
-      : null;
+  final code = value is num ? value.toInt() : null;
   switch (code) {
-    case 0:
     case 10:
       return SharedCoreTaskStatus.queued;
-    case 1:
     case 20:
       return SharedCoreTaskStatus.running;
-    case 2:
     case 30:
       return SharedCoreTaskStatus.succeeded;
-    case -1:
-    case 3:
-    case 40:
-    case 50:
+    case 2:
       return SharedCoreTaskStatus.failed;
     default:
       return SharedCoreTaskStatus.unknown;
+  }
+}
+
+SharedCoreMembershipStatus _membershipStatus(Object? value) {
+  switch (value) {
+    case 'neverSubscribed':
+      return SharedCoreMembershipStatus.neverSubscribed;
+    case 'active':
+      return SharedCoreMembershipStatus.active;
+    case 'inactive':
+      return SharedCoreMembershipStatus.inactive;
+    default:
+      return SharedCoreMembershipStatus.unknown;
+  }
+}
+
+SharedCoreAccountRole _accountRole(Object? value) {
+  if (value is num) {
+    return value.toInt() == 7
+        ? SharedCoreAccountRole.review
+        : SharedCoreAccountRole.standard;
+  }
+  switch (value) {
+    case 'standard':
+      return SharedCoreAccountRole.standard;
+    case 'review':
+      return SharedCoreAccountRole.review;
+    default:
+      return SharedCoreAccountRole.unknown;
+  }
+}
+
+SharedCoreSubscriptionStatus _subscriptionStatus(Object? value) {
+  switch (value) {
+    case 'neverSubscribed':
+    case 0:
+      return SharedCoreSubscriptionStatus.neverSubscribed;
+    case 'active':
+    case 2000:
+      return SharedCoreSubscriptionStatus.active;
+    case 'cancelled':
+    case 2010:
+      return SharedCoreSubscriptionStatus.cancelled;
+    case 'expired':
+    case 2020:
+      return SharedCoreSubscriptionStatus.expired;
+    default:
+      return SharedCoreSubscriptionStatus.unknown;
+  }
+}
+
+SharedCoreHistoryItemType _historyItemType(Object? value) {
+  switch (value) {
+    case 'image':
+      return SharedCoreHistoryItemType.image;
+    case 'video':
+      return SharedCoreHistoryItemType.video;
+    default:
+      return SharedCoreHistoryItemType.unknown;
   }
 }

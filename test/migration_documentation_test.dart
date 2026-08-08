@@ -37,6 +37,66 @@ void main() {
     }
   });
 
+  test('cookbook names every public model field and enum', () {
+    final cookbook = File('docs/cookbook.html').readAsStringSync();
+    const sourcePaths = <String>[
+      'lib/src/configuration.dart',
+      'lib/src/models.dart',
+      'lib/src/errors.dart',
+    ];
+
+    for (final path in sourcePaths) {
+      final source = File(path).readAsStringSync();
+      final declarations = RegExp(
+        r'^(class|enum) (SharedCore[A-Za-z0-9]+)',
+        multiLine: true,
+      ).allMatches(source).toList(growable: false);
+
+      for (var index = 0; index < declarations.length; index++) {
+        final declaration = declarations[index];
+        final name = declaration.group(2)!;
+        final marker = '{ n: "$name"';
+        final entryStart = cookbook.indexOf(marker);
+        expect(
+          entryStart,
+          isNonNegative,
+          reason: '$name from $path is missing from the cookbook',
+        );
+        final entryEnd = cookbook.indexOf('\n', entryStart);
+        final entry = cookbook.substring(
+          entryStart,
+          entryEnd < 0 ? cookbook.length : entryEnd,
+        );
+
+        if (declaration.group(1) != 'class') continue;
+        final bodyEnd = index + 1 < declarations.length
+            ? declarations[index + 1].start
+            : source.length;
+        final body = source.substring(declaration.end, bodyEnd);
+        final fields = RegExp(
+          r'^\s*final\s+[A-Za-z0-9_<>,? ]+\s+(\w+);',
+          multiLine: true,
+        ).allMatches(body).map((match) => match.group(1)!);
+        final getters =
+            RegExp(
+                  r'^\s*(?:bool|int|String|SharedCore\w+)\s+get\s+(\w+)',
+                  multiLine: true,
+                )
+                .allMatches(body)
+                .map((match) => match.group(1)!)
+                .where((name) => name != 'hashCode');
+
+        for (final member in <String>{...fields, ...getters}) {
+          expect(
+            entry,
+            contains(member),
+            reason: '$name.$member is missing from its cookbook model card',
+          );
+        }
+      }
+    }
+  });
+
   test('Flutter-user documentation does not expose Rust or FRB details', () {
     final migration = File('MIGRATION_0_3_0.md').readAsStringSync();
     final cookbook = File('docs/cookbook.html').readAsStringSync();

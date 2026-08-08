@@ -1,3 +1,13 @@
+## Unreleased
+
+- Replaced account membership, role, subscription-state, history-type, and
+  generation-state scalar values with semantic enums.
+- Removed the redundant raw `stateCode` fields from history items and task
+  results; both now expose `SharedCoreTaskStatus` through `status`.
+- Corrected backend generation state `2` to normalize as `failed`.
+- Changed purchase-item `isShow` from `int` to `bool` while retaining legacy
+  `0`/`1` decoding compatibility.
+
 ## 0.3.5
 
 - Android device metadata now reports carrier MCC/MNC codes

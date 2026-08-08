@@ -95,14 +95,14 @@ Future<void> _compileAgainstSemanticClientSurface(
   );
   await client.extendVideoTask(
     source: const SharedCoreHistoryItem(
-      type: 'video',
+      type: SharedCoreHistoryItemType.video,
       recordId: 2810,
       extendId: 450080,
       title: '',
       coveringUrl: '',
       originUrl: '',
       reason: '',
-      stateCode: 30,
+      status: SharedCoreTaskStatus.succeeded,
       createdAt: 0,
       styleId: 0,
       canExtend: true,

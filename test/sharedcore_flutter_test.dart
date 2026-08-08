@@ -36,8 +36,7 @@ void main() {
     expect(account.isPro, isTrue);
   });
 
-  test('url fields decode the lowercase-url keys emitted by the Rust core',
-      () {
+  test('url fields decode the lowercase-url keys emitted by the Rust core', () {
     final account = SharedCoreAccountSnapshot.fromMap(<String, Object?>{
       'purchaseVideoUrlString': 'https://purchase-video',
       'activeUrlString': 'https://active',
@@ -65,6 +64,30 @@ void main() {
 
     expect(history.recordId, 2810);
     expect(history.extendId, 450080);
+    expect(history.type, SharedCoreHistoryItemType.video);
+    expect(history.status, SharedCoreTaskStatus.unknown);
+  });
+
+  test('account semantic codes decode as enums', () {
+    final account = SharedCoreAccountSnapshot.fromMap(<String, Object?>{
+      'membership': 'inactive',
+      'role': 'review',
+      'subscribeState': 'cancelled',
+    });
+
+    expect(account.membership, SharedCoreMembershipStatus.inactive);
+    expect(account.role, SharedCoreAccountRole.review);
+    expect(account.subscribeState, SharedCoreSubscriptionStatus.cancelled);
+  });
+
+  test('task state code 2 decodes as failed for legacy payloads', () {
+    final task = SharedCoreTaskInfo.fromMap(<String, Object?>{'stateCode': 2});
+    final history = SharedCoreHistoryItem.fromMap(<String, Object?>{
+      'stateCode': 2,
+    });
+
+    expect(task.status, SharedCoreTaskStatus.failed);
+    expect(history.status, SharedCoreTaskStatus.failed);
   });
 
   test('exception exposes a local error without a backend code', () {
